@@ -1,20 +1,43 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "cn";
+import type { ActivityCategory } from "@/db/schema";
+import { CATEGORY_LABELS, isTicketCategory, resourceLabel } from "@/lib/constants";
 import { discountPercent, formatEuro } from "@/lib/money";
 import { formatDate, formatTime, formatTimeRange } from "@/lib/time";
+import type { DealRow } from "@/lib/queries";
 
 export type DealTicketData = {
   id: string;
   venueName: string;
   venueCity: string;
   courtName: string;
+  category: ActivityCategory;
+  remaining: number;
+  capacity: number;
   startsAt: Date;
   endsAt: Date;
   originalPriceCents: number;
   dealPriceCents: number;
   status: string;
 };
+
+export function toDealTicket(deal: DealRow): DealTicketData {
+  return {
+    id: deal.slot.id,
+    venueName: deal.venue.name,
+    venueCity: deal.venue.city,
+    courtName: deal.court.name,
+    category: deal.venue.category,
+    remaining: deal.remaining,
+    capacity: deal.slot.capacity,
+    startsAt: deal.slot.startsAt,
+    endsAt: deal.slot.endsAt,
+    originalPriceCents: deal.slot.originalPriceCents,
+    dealPriceCents: deal.slot.dealPriceCents,
+    status: deal.slot.status,
+  };
+}
 
 export function DealTicket({
   deal,
@@ -26,6 +49,10 @@ export function DealTicket({
   compact?: boolean;
 }) {
   const off = discountPercent(deal.originalPriceCents, deal.dealPriceCents);
+  const ticketed = isTicketCategory(deal.category);
+  const unitLine = ticketed
+    ? `${deal.remaining} ${resourceLabel(deal.category, deal.remaining)} left`
+    : `1 ${resourceLabel(deal.category)}`;
   const inner = (
     <article
       className={cn(
@@ -37,7 +64,9 @@ export function DealTicket({
       )}
     >
       <div className="relative flex flex-col justify-between bg-[var(--turf)] py-3 pr-3 pl-2.5 text-[var(--ball)] sm:px-4 sm:py-4 sm:pr-5">
-        <p className="kicker text-[9px] text-white/70 sm:text-[10px]">Court</p>
+        <p className="font-mono text-[9px] tracking-[0.22em] text-white/70 uppercase sm:text-[10px]">
+          {CATEGORY_LABELS[deal.category]}
+        </p>
         <p className="font-display text-xl leading-none sm:text-3xl md:text-4xl">
           {formatTime(deal.startsAt)}
         </p>
@@ -48,30 +77,28 @@ export function DealTicket({
         <span className="pointer-events-none absolute bottom-3 -right-2 size-3.5 rounded-full bg-[var(--wall)] sm:size-4" />
         <span className="pointer-events-none absolute inset-y-3 right-0 w-px border-r border-dashed border-white/35" />
       </div>
-      <div className="relative flex flex-col gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
-        <div className="flex items-start justify-between gap-2 sm:gap-3">
-          <div className="min-w-0">
-            <p className="kicker text-[var(--ink)]/50">{deal.venueCity} surplus</p>
-            <h3 className="font-display text-lg leading-tight sm:text-xl md:text-2xl">
-              {deal.venueName}
-            </h3>
-            <p className="mt-0.5 truncate text-sm text-[var(--ink)]/70">{deal.courtName}</p>
+      <div className="relative flex flex-col gap-3 px-4 py-4 md:px-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-mono text-[10px] tracking-[0.18em] text-[var(--ink)]/55 uppercase">
+              {deal.venueCity} surplus
+            </p>
+            <h3 className="font-display text-xl leading-tight md:text-2xl">{deal.venueName}</h3>
+            <p className="mt-1 text-sm text-[var(--ink)]/70">{deal.courtName}</p>
           </div>
-          <span className="shrink-0 rotate-6 bg-[var(--ball)] px-2 py-1 font-display text-xs text-[var(--ink)] shadow-[2px_2px_0_var(--ink)] sm:text-sm">
+          <span className="rotate-6 rounded-sm bg-[var(--ball)] px-2 py-1 font-display text-sm text-[var(--ink)] shadow-[2px_2px_0_var(--ink)]">
             −{off}%
           </span>
         </div>
         <div className="mt-auto flex items-end justify-between gap-3">
-          <p className="font-mono text-[10px] tracking-wide text-[var(--ink)]/55 uppercase sm:text-xs">
-            {formatTimeRange(deal.startsAt, deal.endsAt)} · 1 court
+          <p className="font-mono text-xs tracking-wide text-[var(--ink)]/55 uppercase">
+            {formatTimeRange(deal.startsAt, deal.endsAt)} · {unitLine}
           </p>
           <div className="text-right">
             <p className="font-mono text-xs text-[var(--ink)]/45 line-through">
               {formatEuro(deal.originalPriceCents)}
             </p>
-            <p className="font-display text-xl leading-none sm:text-2xl">
-              {formatEuro(deal.dealPriceCents)}
-            </p>
+            <p className="font-display text-2xl leading-none">{formatEuro(deal.dealPriceCents)}</p>
           </div>
         </div>
       </div>
@@ -80,10 +107,7 @@ export function DealTicket({
 
   if (!href) return inner;
   return (
-    <Link
-      href={href}
-      className="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ball)]"
-    >
+    <Link href={href} className="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ball)]">
       {inner}
     </Link>
   );
@@ -100,7 +124,9 @@ export function EmptyDeals({
 }) {
   return (
     <div className="ticket border border-dashed border-[var(--ink)]/25 bg-[var(--ticket)] px-6 py-14 text-center">
-      <p className="kicker text-[var(--ink)]/50">No leftover hours</p>
+      <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">
+        No leftover hours
+      </p>
       <h2 className="mt-2 font-display text-3xl">{title}</h2>
       <p className="mx-auto mt-3 max-w-md text-[var(--ink)]/70">{body}</p>
       {action ? <div className="mt-6">{action}</div> : null}

@@ -1,6 +1,8 @@
 # Fillslot
 
-Too Good To Go for leftover padel court time. First city: Maastricht. First club: Plaza Padel.
+Too Good To Go for leftover hours and leftover tickets. First city: Maastricht.
+
+Padel, hair, spa, bowling, cinema, and stadium surplus — clubs and venues dump empty windows or unsold tickets at a discount.
 
 Built for a MAIN (Maastricht AI & Tech Network) hackathon at SBE, Maastricht University.
 
@@ -15,7 +17,9 @@ Repo: [github.com/omar1575/fillslot](https://github.com/omar1575/fillslot)
 
 Suggested split for speed: one person owns **consumer** (`/`, `/deals`, `/bookings`, `/login`), the other owns **club + payments** (`/club`, Stripe, schema, seed).
 
-Clubs list empty hours at a discount. Players pay in advance (iDEAL or card). Fillslot takes 15% commission.
+Venues list empty hours or leftover tickets at a discount. Guests pay in advance (iDEAL or card). Fillslot takes 15% commission.
+
+Exclusive listings (padel, hair, spa, bowling) are one resource for one time window. Cinema and stadium listings sell leftover tickets with quantity.
 
 ## Local
 
@@ -28,15 +32,11 @@ npm run db:generate   # already committed after first run
 npm run dev
 ```
 
-Without `DATABASE_URL`, local development uses in-memory PGlite Postgres and seeds Plaza Padel on boot. Data resets when the dev server restarts. For a persistent database, point `DATABASE_URL` at Neon or any Postgres instance.
+Without `DATABASE_URL`, local development uses in-memory PGlite Postgres and seeds the six Maastricht demo venues on boot. Data resets when the dev server restarts. For a persistent database, point `DATABASE_URL` at Neon or any Postgres instance.
 
-Open [http://localhost:3000](http://localhost:3000). On `/login`, local demo buttons sign in as:
+Open [http://localhost:3000](http://localhost:3000). On `/login`, local demo buttons sign in as the player, each demo partner, or admin.
 
-- player@fillslot.test
-- club@plazapadel.test
-- admin@fillslot.test
-
-Without Stripe keys, booking confirms immediately (dev path). With `STRIPE_SECRET_KEY`, Checkout uses iDEAL + cards and Connect destination charges when the club has finished onboarding.
+Without Stripe keys, booking confirms immediately (dev path). With `STRIPE_SECRET_KEY`, Checkout uses iDEAL + cards and Connect destination charges when the venue has finished onboarding.
 
 ## Neon / Vercel
 

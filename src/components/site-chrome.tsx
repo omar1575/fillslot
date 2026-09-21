@@ -61,7 +61,7 @@ export function SiteFooter() {
         <p>
           <span className="font-display text-[var(--ball)]">Fillslot</span>
           {" · "}
-          Leftover hours, paid in advance. Netherlands-first.
+          Leftover hours and tickets, paid in advance. Netherlands-first.
         </p>
         <div className="flex gap-4">
           <Link href="/terms" className="hover:text-[var(--ball)]">

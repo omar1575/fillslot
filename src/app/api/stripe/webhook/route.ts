@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { venues } from "@/db/schema";
-import { fulfillCheckoutSession, releaseHold } from "@/lib/booking";
+import { fulfillCheckoutSession, releaseCheckoutHold } from "@/lib/booking";
 import { getStripe } from "@/lib/stripe";
 
 export async function POST(request: Request) {
@@ -40,11 +40,7 @@ export async function POST(request: Request) {
     event.type === "checkout.session.expired" ||
     event.type === "checkout.session.async_payment_failed"
   ) {
-    const session = event.data.object;
-    const slotId = session.metadata?.slotId;
-    if (slotId) {
-      await releaseHold(slotId, session.id);
-    }
+    await releaseCheckoutHold(event.data.object);
   }
 
   if (event.type === "account.updated") {

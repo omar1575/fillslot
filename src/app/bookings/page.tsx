@@ -5,6 +5,7 @@ import { EmptyDeals } from "@/components/deal-ticket";
 import { formatEuro } from "@/lib/money";
 import { getUserBookings } from "@/lib/queries";
 import { formatDate, formatTimeRange } from "@/lib/time";
+import { resourceLabel } from "@/lib/constants";
 
 export const metadata = { title: "Bookings" };
 
@@ -22,7 +23,7 @@ export default async function BookingsPage() {
       <div className="mt-8 grid gap-4 sm:mt-10">
         {rows.length === 0 ? (
           <EmptyDeals
-            title="No courts booked yet"
+            title="Nothing booked yet"
             body="Grab an off-peak leftover before someone else does."
             action={
               <Link href="/deals" className="btn-ink">
@@ -42,6 +43,9 @@ export default async function BookingsPage() {
                 <p className="font-display text-xl">{venue.name}</p>
                 <p className="text-sm text-[var(--ink)]/65">
                   {court.name} · {formatDate(slot.startsAt)} · {formatTimeRange(slot.startsAt, slot.endsAt)}
+                  {booking.quantity > 1
+                    ? ` · ${booking.quantity} ${resourceLabel(venue.category, booking.quantity)}`
+                    : ""}
                 </p>
               </div>
               <div className="text-right">

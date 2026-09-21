@@ -20,7 +20,7 @@ export async function sendMagicLink(to: string, url: string) {
       from: process.env.EMAIL_FROM ?? "Fillslot <noreply@fillslot.app>",
       to,
       subject: "Your Fillslot sign-in link",
-      html: `<p>Book leftover court time with this link:</p><p><a href="${url}">${url}</a></p><p>This link expires soon.</p>`,
+      html: `<p>Book leftover hours and tickets with this link:</p><p><a href="${url}">${url}</a></p><p>This link expires soon.</p>`,
     });
     return;
   }
