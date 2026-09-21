@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function NotFound() {
   return (
     <main className="mx-auto max-w-xl px-4 py-24 text-center">
@@ -5,10 +7,10 @@ export default function NotFound() {
         404
       </p>
       <h1 className="mt-2 font-display text-5xl">That slot is gone</h1>
-      <p className="mt-3 text-[var(--ink)]/70">The page or court time you wanted is not here.</p>
-      <a href="/deals" className="mt-6 inline-block bg-[var(--ink)] px-4 py-2 text-[var(--ball)]">
+      <p className="mt-3 text-[var(--ink)]/70">The page or leftover you wanted is not here.</p>
+      <Link href="/deals" className="mt-6 inline-block bg-[var(--ink)] px-4 py-2 text-[var(--ball)]">
         Browse leftovers
-      </a>
+      </Link>
     </main>
   );
 }

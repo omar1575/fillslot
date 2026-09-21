@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { formatEuro } from "@/lib/money";
 import { getBookingWithDetails } from "@/lib/queries";
 import { formatDateTime, formatTimeRange } from "@/lib/time";
+import { resourceLabel } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,11 @@ export default async function BookingPage({
         <p className="mt-4 font-display text-6xl tracking-[0.18em]">{row.booking.code}</p>
         <h1 className="mt-6 font-display text-3xl">{row.venue.name}</h1>
         <p className="mt-2 text-[var(--ink)]/70">{row.court.name}</p>
+        {row.booking.quantity > 1 ? (
+          <p className="mt-1 text-sm text-[var(--ink)]/60">
+            {row.booking.quantity} leftover {resourceLabel(row.venue.category, row.booking.quantity)}
+          </p>
+        ) : null}
         <p className="mt-4 font-mono">
           {formatDateTime(row.slot.startsAt)} · {formatTimeRange(row.slot.startsAt, row.slot.endsAt)}
         </p>

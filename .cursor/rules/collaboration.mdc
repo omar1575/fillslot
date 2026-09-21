@@ -29,7 +29,7 @@ Two people (and two Cursor agents) share https://github.com/omar1575/fillslot. T
 
 ## Product facts both agents must keep
 
-- Marketplace for leftover bookable time; padel in Maastricht first.
-- English UI, euros, iDEAL + cards via Stripe, 15% commission.
-- One listing = one court for one time window. Pay before play. Non-refundable unless the club cancels.
-- Local without `DATABASE_URL` uses in-memory PGlite and reseeds Plaza Padel on boot.
+- Marketplace for leftover bookable time and leftover tickets in Maastricht.
+- Categories: padel, hair, spa, bowling, cinema, stadium. English UI, euros, iDEAL + cards via Stripe, 15% commission.
+- Exclusive listing = one resource for one time window. Cinema/stadium listings sell leftover tickets with quantity. Pay before you go. Non-refundable unless the venue cancels.
+- Local without `DATABASE_URL` uses in-memory PGlite and reseeds the six demo venues on boot.

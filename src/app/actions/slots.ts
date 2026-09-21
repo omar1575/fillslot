@@ -11,6 +11,7 @@ import {
   cancelOpenSlot,
   refundAndCancelBooking,
 } from "@/lib/booking";
+import { isTicketCategory, resourceLabel } from "@/lib/constants";
 import { amsterdamInputToUtc } from "@/lib/time";
 
 async function requireClubVenue() {
@@ -24,7 +25,7 @@ async function requireClubVenue() {
     where: eq(venues.ownerId, session.user.id),
   });
   if (!venue) {
-    throw new BookingError("No club is attached to this account yet.");
+    throw new BookingError("No venue is attached to this account yet.");
   }
   return { session, venue };
 }
@@ -36,9 +37,15 @@ export async function createSlotAction(formData: FormData) {
   const endsLocal = String(formData.get("endsAt") ?? "");
   const originalPrice = Number(formData.get("originalPrice"));
   const dealPrice = Number(formData.get("dealPrice"));
+  const unit = resourceLabel(venue.category);
+  const ticketed = isTicketCategory(venue.category);
+  const capacity = ticketed ? Math.floor(Number(formData.get("capacity") ?? 1)) : 1;
 
   if (!courtId || !startsLocal || !endsLocal) {
     redirect("/club/slots/new?error=Fill%20in%20every%20field");
+  }
+  if (!Number.isInteger(capacity) || capacity < 1) {
+    redirect("/club/slots/new?error=Capacity%20must%20be%20at%20least%201");
   }
 
   const originalPriceCents = Math.round(originalPrice * 100);
@@ -63,7 +70,7 @@ export async function createSlotAction(formData: FormData) {
     where: eq(courts.id, courtId),
   });
   if (!court || court.venueId !== venue.id) {
-    redirect("/club/slots/new?error=Unknown%20court");
+    redirect(`/club/slots/new?error=Unknown%20${encodeURIComponent(unit)}`);
   }
 
   try {
@@ -73,10 +80,13 @@ export async function createSlotAction(formData: FormData) {
       endsAt,
       originalPriceCents,
       dealPriceCents,
+      capacity,
       status: "open",
     });
   } catch {
-    redirect("/club/slots/new?error=That%20court%20already%20has%20a%20slot%20at%20this%20time");
+    redirect(
+      `/club/slots/new?error=That%20${encodeURIComponent(unit)}%20already%20has%20a%20slot%20at%20this%20time`,
+    );
   }
 
   revalidatePath("/club");

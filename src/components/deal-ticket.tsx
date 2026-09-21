@@ -1,20 +1,43 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "cn";
+import type { ActivityCategory } from "@/db/schema";
+import { CATEGORY_LABELS, isTicketCategory, resourceLabel } from "@/lib/constants";
 import { discountPercent, formatEuro } from "@/lib/money";
 import { formatDate, formatTimeRange } from "@/lib/time";
+import type { DealRow } from "@/lib/queries";
 
 export type DealTicketData = {
   id: string;
   venueName: string;
   venueCity: string;
   courtName: string;
+  category: ActivityCategory;
+  remaining: number;
+  capacity: number;
   startsAt: Date;
   endsAt: Date;
   originalPriceCents: number;
   dealPriceCents: number;
   status: string;
 };
+
+export function toDealTicket(deal: DealRow): DealTicketData {
+  return {
+    id: deal.slot.id,
+    venueName: deal.venue.name,
+    venueCity: deal.venue.city,
+    courtName: deal.court.name,
+    category: deal.venue.category,
+    remaining: deal.remaining,
+    capacity: deal.slot.capacity,
+    startsAt: deal.slot.startsAt,
+    endsAt: deal.slot.endsAt,
+    originalPriceCents: deal.slot.originalPriceCents,
+    dealPriceCents: deal.slot.dealPriceCents,
+    status: deal.slot.status,
+  };
+}
 
 export function DealTicket({
   deal,
@@ -26,6 +49,10 @@ export function DealTicket({
   compact?: boolean;
 }) {
   const off = discountPercent(deal.originalPriceCents, deal.dealPriceCents);
+  const ticketed = isTicketCategory(deal.category);
+  const unitLine = ticketed
+    ? `${deal.remaining} ${resourceLabel(deal.category, deal.remaining)} left`
+    : `1 ${resourceLabel(deal.category)}`;
   const inner = (
     <article
       className={cn(
@@ -35,7 +62,9 @@ export function DealTicket({
       )}
     >
       <div className="relative flex flex-col justify-between border-r border-dashed border-[var(--ink)]/25 bg-[var(--turf)] px-4 py-4 text-[var(--ball)]">
-        <p className="font-mono text-[10px] tracking-[0.22em] uppercase">Court</p>
+        <p className="font-mono text-[10px] tracking-[0.22em] uppercase">
+          {CATEGORY_LABELS[deal.category]}
+        </p>
         <p className="font-display text-3xl leading-none md:text-4xl">
           {formatTimeRange(deal.startsAt, deal.endsAt).slice(0, 5)}
         </p>
@@ -57,7 +86,7 @@ export function DealTicket({
         </div>
         <div className="mt-auto flex items-end justify-between gap-3">
           <p className="font-mono text-xs tracking-wide text-[var(--ink)]/55 uppercase">
-            {formatTimeRange(deal.startsAt, deal.endsAt)} · 1 court
+            {formatTimeRange(deal.startsAt, deal.endsAt)} · {unitLine}
           </p>
           <div className="text-right">
             <p className="font-mono text-xs text-[var(--ink)]/45 line-through">

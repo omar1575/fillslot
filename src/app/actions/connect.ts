@@ -35,7 +35,7 @@ export async function startConnectOnboarding() {
       },
       business_profile: {
         name: venue.name,
-        product_description: "Surplus padel court time",
+        product_description: "Surplus leftover hours and tickets",
       },
     });
     accountId = account.id;

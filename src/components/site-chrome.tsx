@@ -59,7 +59,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-[var(--ink)]/10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-[var(--ink)]/60 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p>Leftover hours, paid in advance. Netherlands-first.</p>
+        <p>Leftover hours and tickets, paid in advance. Netherlands-first.</p>
         <div className="flex gap-4">
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>

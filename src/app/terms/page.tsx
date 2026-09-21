@@ -6,15 +6,16 @@ export default function TermsPage() {
       <h1 className="font-display text-5xl">Terms</h1>
       <div className="mt-6 space-y-4 text-[var(--ink)]/80">
         <p>
-          Fillslot sells leftover bookable time. A booking is one court for the printed window.
-          Payment is taken in advance.
+          Fillslot sells leftover bookable time and leftover tickets. A booking is one resource for
+          the printed window, or a quantity of leftover cinema or stadium tickets. Payment is taken
+          in advance.
         </p>
         <p>
-          Bookings are non-refundable unless the club cancels. If the club cancels, Fillslot
+          Bookings are non-refundable unless the venue cancels. If the venue cancels, Fillslot
           refunds the amount you paid.
         </p>
         <p>
-          Fillslot is a marketplace. The club provides the court. Fillslot takes a commission on
+          Fillslot is a marketplace. The venue provides the slot. Fillslot takes a commission on
           each paid booking.
         </p>
         <p>These terms are a placeholder for a Netherlands-based pilot and are not legal advice.</p>

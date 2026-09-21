@@ -8,8 +8,9 @@ import { getVenueForOwner } from "@/lib/queries";
 import { getDb } from "@/db";
 import { courts } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
+import { isTicketCategory, resourceLabel } from "@/lib/constants";
 
-export const metadata = { title: "New leftover hour" };
+export const metadata = { title: "New leftover" };
 
 export default async function NewSlotPage({
   searchParams,
@@ -30,20 +31,29 @@ export default async function NewSlotPage({
     .orderBy(asc(courts.sortOrder));
   const query = await searchParams;
   const error = typeof query.error === "string" ? query.error : null;
+  const ticketed = isTicketCategory(venue.category);
+  const unit = resourceLabel(venue.category);
+  const units = resourceLabel(venue.category, 2);
 
   return (
     <main className="mx-auto w-full max-w-lg px-4 py-12 sm:px-6">
       <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">
         {venue.name}
       </p>
-      <h1 className="mt-2 font-display text-5xl">List a leftover hour</h1>
+      <h1 className="mt-2 font-display text-5xl">
+        List leftover {ticketed ? units : "hours"}
+      </h1>
       <p className="mt-3 text-[var(--ink)]/70">
-        Dump a court window that is not filling. Players pay the deal price in advance.
+        {ticketed
+          ? `Dump leftover ${units} that are not filling. Guests pay the deal price in advance.`
+          : `Dump a ${unit} window that is not filling. Guests pay the deal price in advance.`}
       </p>
       {error ? <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">{error}</p> : null}
       <form action={createSlotAction} className="mt-8 space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="courtId">Court</Label>
+          <Label htmlFor="courtId" className="capitalize">
+            {unit}
+          </Label>
           <select
             id="courtId"
             name="courtId"
@@ -67,28 +77,46 @@ export default async function NewSlotPage({
             <Input id="endsAt" name="endsAt" type="datetime-local" required />
           </div>
         </div>
+        {ticketed ? (
+          <div className="space-y-2">
+            <Label htmlFor="capacity">Leftover {units}</Label>
+            <Input
+              id="capacity"
+              name="capacity"
+              type="number"
+              min="1"
+              step="1"
+              defaultValue={venue.category === "cinema" ? "24" : "8"}
+              required
+            />
+          </div>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="originalPrice">Usual price (€)</Label>
+            <Label htmlFor="originalPrice">
+              Usual price (€){ticketed ? " each" : ""}
+            </Label>
             <Input
               id="originalPrice"
               name="originalPrice"
               type="number"
               min="1"
               step="0.01"
-              defaultValue="36"
+              defaultValue={ticketed ? "14" : "36"}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dealPrice">Fillslot price (€)</Label>
+            <Label htmlFor="dealPrice">
+              Fillslot price (€){ticketed ? " each" : ""}
+            </Label>
             <Input
               id="dealPrice"
               name="dealPrice"
               type="number"
               min="1"
               step="0.01"
-              defaultValue="18"
+              defaultValue={ticketed ? "7" : "18"}
               required
             />
           </div>
