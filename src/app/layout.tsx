@@ -24,11 +24,11 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
-    default: "Fillslot — leftover court time in Maastricht",
+    default: "Fillslot — leftover hours and tickets in Maastricht",
     template: "%s · Fillslot",
   },
   description:
-    "Clubs list empty padel hours at a discount. You pay in the app. They keep the court from going stale.",
+    "Venues list leftover hours and tickets at a discount. You pay in the app. They keep empty slots from going stale.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

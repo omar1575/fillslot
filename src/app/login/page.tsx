@@ -34,7 +34,7 @@ export default async function LoginPage({
       </p>
       <h1 className="mt-2 font-display text-5xl">Sign in</h1>
       <p className="mt-3 text-[var(--ink)]/70">
-        Magic link to your email. No password. Book leftover courts or list empty hours.
+        Magic link to your email. No password. Book leftover hours and tickets, or list empty slots.
       </p>
 
       {typeof query.error === "string" ? (
@@ -68,19 +68,34 @@ export default async function LoginPage({
           <p className="font-mono text-[11px] tracking-[0.16em] uppercase text-[var(--ink)]/50">
             Local demo
           </p>
-          <div className="mt-3 grid gap-2">
-            {DEV_ACCOUNTS.map((account) => (
-              <form
-                action={devSignInAction.bind(null, account.email, callbackUrl)}
-                key={account.email}
-              >
-                <button
-                  type="submit"
-                  className="h-10 w-full bg-[#d5e4f2] px-3 text-left text-sm hover:bg-[#c5d8ea]"
-                >
-                  Continue as {account.name}
-                </button>
-              </form>
+          <div className="mt-3 grid gap-4">
+            {(
+              [
+                { label: "Player", accounts: DEV_ACCOUNTS.filter((account) => account.role === "consumer") },
+                { label: "Partners", accounts: DEV_ACCOUNTS.filter((account) => account.role === "club") },
+                { label: "Admin", accounts: DEV_ACCOUNTS.filter((account) => account.role === "admin") },
+              ] as const
+            ).map((group) => (
+              <div key={group.label}>
+                <p className="mb-2 font-mono text-[10px] tracking-[0.16em] uppercase text-[var(--ink)]/40">
+                  {group.label}
+                </p>
+                <div className="grid gap-2">
+                  {group.accounts.map((account) => (
+                    <form
+                      action={devSignInAction.bind(null, account.email, callbackUrl)}
+                      key={account.email}
+                    >
+                      <button
+                        type="submit"
+                        className="h-10 w-full bg-[#d5e4f2] px-3 text-left text-sm hover:bg-[#c5d8ea]"
+                      >
+                        Continue as {account.name}
+                      </button>
+                    </form>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           {mailbox[0] ? (

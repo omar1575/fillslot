@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
-import { BookButton } from "@/components/book-button";
-import { CourtGraphic } from "@/components/court-graphic";
-import { DealTicket } from "@/components/deal-ticket";
+import { ActivityGraphic } from "@/components/activity-graphic";
+import { BookForm } from "@/components/book-form";
+import { DealTicket, toDealTicket } from "@/components/deal-ticket";
+import { isTicketCategory, leftoverDescription, resourceLabel } from "@/lib/constants";
 import { formatEuro, discountPercent } from "@/lib/money";
-import { getDealById, isSlotBookable } from "@/lib/queries";
+import { getDealById, isDealBookable } from "@/lib/queries";
 import { formatDateTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +35,11 @@ export default async function DealPage({
   if (!deal) notFound();
 
   const session = await auth();
-  const bookable = isSlotBookable(deal.slot);
+  const bookable = isDealBookable(deal);
   const error = typeof query.error === "string" ? query.error : null;
   const cancelled = query.cancelled === "1";
   const off = discountPercent(deal.slot.originalPriceCents, deal.slot.dealPriceCents);
+  const ticketed = isTicketCategory(deal.venue.category);
 
   return (
     <main className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr] sm:px-6">
@@ -50,39 +52,31 @@ export default async function DealPage({
           {deal.venue.address}, {deal.venue.postalCode} {deal.venue.city}
         </p>
         <div className="mt-8">
-          <DealTicket
-            deal={{
-              id: deal.slot.id,
-              venueName: deal.venue.name,
-              venueCity: deal.venue.city,
-              courtName: deal.court.name,
-              startsAt: deal.slot.startsAt,
-              endsAt: deal.slot.endsAt,
-              originalPriceCents: deal.slot.originalPriceCents,
-              dealPriceCents: deal.slot.dealPriceCents,
-              status: deal.slot.status,
-            }}
-          />
+          <DealTicket deal={toDealTicket(deal)} />
         </div>
         <p className="mt-8 max-w-xl text-[var(--ink)]/75">{deal.venue.description}</p>
       </div>
 
       <aside className="h-fit bg-[var(--ink)] p-6 text-[var(--ticket)]">
-        <CourtGraphic className="mb-6 w-full opacity-90" />
+        <ActivityGraphic category={deal.venue.category} className="mb-6 w-full opacity-90" />
         <p className="font-mono text-[11px] tracking-[0.2em] text-[var(--ball)] uppercase">
-          Pay before you play
+          Pay before you go
         </p>
         <h2 className="mt-2 font-display text-3xl">{formatDateTime(deal.slot.startsAt)}</h2>
         <p className="mt-4 text-sm text-white/70">
           {deal.court.name} · −{off}% vs the usual {formatEuro(deal.slot.originalPriceCents)}
+          {ticketed ? ` per ${resourceLabel(deal.venue.category)}` : ""}
         </p>
         <p className="mt-2 font-display text-4xl">{formatEuro(deal.slot.dealPriceCents)}</p>
         <p className="mt-2 text-sm text-white/55">
-          Fillslot keeps 15% as commission. Non-refundable unless the club cancels.
+          Fillslot keeps 15% as commission. {leftoverDescription(deal.venue.category)} unless the
+          venue cancels.
         </p>
         {error ? <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">{error}</p> : null}
         {cancelled ? (
-          <p className="mt-4 bg-white/10 px-3 py-2 text-sm">Checkout cancelled. The court is still available.</p>
+          <p className="mt-4 bg-white/10 px-3 py-2 text-sm">
+            Checkout cancelled. The leftover is still available.
+          </p>
         ) : null}
         <div className="mt-6">
           {!session ? (
@@ -93,9 +87,11 @@ export default async function DealPage({
               Sign in to book
             </Link>
           ) : (
-            <BookButton
+            <BookForm
               slotId={deal.slot.id}
-              label={bookable ? `Book for ${formatEuro(deal.slot.dealPriceCents)}` : "No longer available"}
+              category={deal.venue.category}
+              unitPriceCents={deal.slot.dealPriceCents}
+              remaining={deal.remaining}
               disabled={!bookable}
             />
           )}

@@ -12,6 +12,14 @@ import type { AdapterAccountType } from "next-auth/adapters";
 
 export const userRoleEnum = pgEnum("user_role", ["consumer", "club", "admin"]);
 export const venueStatusEnum = pgEnum("venue_status", ["pending", "approved"]);
+export const activityCategoryEnum = pgEnum("activity_category", [
+  "padel",
+  "hair",
+  "spa",
+  "bowling",
+  "cinema",
+  "stadium",
+]);
 export const slotStatusEnum = pgEnum("slot_status", [
   "open",
   "held",
@@ -97,6 +105,7 @@ export const venues = pgTable("venue", {
   postalCode: text("postal_code").notNull(),
   country: text("country").notNull().default("NL"),
   photoUrl: text("photo_url"),
+  category: activityCategoryEnum("category").notNull().default("padel"),
   commissionBps: integer("commission_bps").notNull().default(1500),
   stripeAccountId: text("stripe_account_id"),
   stripeDetailsSubmitted: integer("stripe_details_submitted")
@@ -130,6 +139,7 @@ export const slots = pgTable(
     endsAt: timestamp("ends_at", { mode: "date" }).notNull(),
     originalPriceCents: integer("original_price_cents").notNull(),
     dealPriceCents: integer("deal_price_cents").notNull(),
+    capacity: integer("capacity").notNull().default(1),
     status: slotStatusEnum("status").notNull().default("open"),
     holdExpiresAt: timestamp("hold_expires_at", { mode: "date" }),
     stripeCheckoutSessionId: text("stripe_checkout_session_id"),
@@ -153,6 +163,7 @@ export const bookings = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     code: text("code").notNull().unique(),
+    quantity: integer("quantity").notNull().default(1),
     grossCents: integer("gross_cents").notNull(),
     commissionCents: integer("commission_cents").notNull(),
     netCents: integer("net_cents").notNull(),
@@ -162,7 +173,9 @@ export const bookings = pgTable(
     status: bookingStatusEnum("status").notNull().default("pending"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
-  (booking) => [uniqueIndex("booking_slot_idx").on(booking.slotId)],
+  (booking) => [
+    uniqueIndex("booking_checkout_session_idx").on(booking.stripeCheckoutSessionId),
+  ],
 );
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -196,3 +209,4 @@ export type Court = typeof courts.$inferSelect;
 export type Slot = typeof slots.$inferSelect;
 export type Booking = typeof bookings.$inferSelect;
 export type UserRole = (typeof userRoleEnum.enumValues)[number];
+export type ActivityCategory = (typeof activityCategoryEnum.enumValues)[number];
