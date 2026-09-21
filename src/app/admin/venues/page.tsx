@@ -17,7 +17,7 @@ export default async function AdminVenuesPage() {
     <main className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6">
       <h1 className="font-display text-5xl">Venues</h1>
       <p className="mt-3 text-[var(--ink)]/70">Approve a venue before its leftover hours go public.</p>
-      <div className="mt-8 divide-y divide-[var(--ink)]/10 bg-white ring-1 ring-[var(--ink)]/10">
+      <div className="mt-8 divide-y divide-[var(--ink)]/10 bg-[var(--ticket)] ring-1 ring-[var(--ink)]/10">
         {venueRows.map((venue) => (
           <div key={venue.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
             <div>

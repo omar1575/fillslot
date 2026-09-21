@@ -3,13 +3,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { startConnectOnboarding } from "@/app/actions/connect";
 import { cancelSlotAction, refundBookingAction } from "@/app/actions/slots";
-import { Button } from "@/components/ui/button";
 import { EmptyDeals } from "@/components/deal-ticket";
+import { ClubGroupSection } from "@/components/group/club-group-section";
 import { formatEuro } from "@/lib/money";
 import { getClubDashboard, getVenueForOwner, getWeeklyWindowsForVenue } from "@/lib/queries";
-import { isStripeConfigured } from "@/lib/env";
-import { syncConnectAccount } from "@/lib/connect";
-import { formatDate, formatTimeRange, formatClock } from "@/lib/time";
 import {
   CATEGORY_LABELS,
   isTicketCategory,
@@ -17,6 +14,9 @@ import {
   WEEKDAYS,
 } from "@/lib/constants";
 import { fillRuleCopy } from "@/lib/fill-rules";
+import { isStripeConfigured } from "@/lib/env";
+import { isConnectReady, syncConnectAccount } from "@/lib/connect";
+import { formatClock, formatDate, formatTimeRange } from "@/lib/time";
 
 export const metadata = { title: "Club" };
 
@@ -44,14 +44,14 @@ export default async function ClubPage({
   const dashboard = await getClubDashboard(venue.id);
   const schedule = await getWeeklyWindowsForVenue(venue.id);
   const error = typeof query.error === "string" ? query.error : null;
-  const payoutReady = Boolean(venue.stripeAccountId && venue.stripeDetailsSubmitted);
+  const payoutReady = isConnectReady(venue);
   const now = new Date();
   const ticketed = isTicketCategory(venue.category);
   const unit = resourceLabel(venue.category);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <main className="page">
+      <div id="locations" className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">
             {CATEGORY_LABELS[venue.category]} desk
@@ -68,16 +68,16 @@ export default async function ClubPage({
           >
             Edit leftover week
           </Link>
-          <Link
-            href="/club/slots/new"
-            className="w-fit bg-[var(--ball)] px-4 py-2 font-display text-[var(--ink)]"
-          >
+          <Link href="/club/slots/new" className="btn-ball w-fit">
             List a leftover {ticketed ? resourceLabel(venue.category, 2) : "hour"}
+          </Link>
+          <Link href="/partner/activity" className="btn-ghost w-fit">
+            Add group activity
           </Link>
         </div>
       </div>
 
-      {error ? <p className="mt-6 bg-[#c7342b] px-3 py-2 text-white">{error}</p> : null}
+      {error ? <p className="notice-error mt-6">{error}</p> : null}
 
       {venue.status === "pending" ? (
         <p className="mt-6 bg-[var(--ball)] px-3 py-2 text-sm text-[var(--ink)]">
@@ -124,7 +124,7 @@ export default async function ClubPage({
         )}
       </section>
 
-      <section className="mt-8 bg-white p-5 ring-1 ring-[var(--ink)]/10">
+      <section className="ticket mt-8 bg-[var(--ticket)] p-5 shadow-ticket">
         <h2 className="font-display text-2xl">Payouts</h2>
         {payoutReady ? (
           <p className="mt-2 text-sm text-[var(--ink)]/70">
@@ -138,9 +138,9 @@ export default async function ClubPage({
             </p>
             {isStripeConfigured() ? (
               <form action={startConnectOnboarding}>
-                <Button type="submit" className="rounded-none">
+                <button type="submit" className="btn-ink">
                   Set up Stripe Connect
-                </Button>
+                </button>
               </form>
             ) : (
               <p className="font-mono text-xs uppercase">Stripe keys not set · local demo</p>
@@ -149,8 +149,8 @@ export default async function ClubPage({
         )}
       </section>
 
-      <section className="mt-10">
-        <h2 className="font-display text-3xl">Slots</h2>
+      <section id="availabilities" className="mt-10">
+        <h2 className="font-display text-3xl">Availabilities</h2>
         {dashboard.slots.length === 0 ? (
           <div className="mt-4">
             <EmptyDeals
@@ -171,15 +171,19 @@ export default async function ClubPage({
                   <th className="py-2">When</th>
                   <th className="capitalize">{unit}</th>
                   <th>Price</th>
-                  <th>{ticketed ? "Inventory" : "Status"}</th>
+                  <th>People</th>
                   <th>Guests</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {dashboard.slots.map(({ slot, court, bookings, remaining, sold }) => {
-                  const paid = bookings.filter((row) => row.booking.status === "paid");
+                  const paid = bookings.filter(
+                    (row) => row.booking.status === "paid" || row.booking.status === "completed",
+                  );
                   const expired = slot.startsAt < now && slot.status === "open";
+                  const fillNote =
+                    slot.fillState !== "collecting" ? ` · ${slot.fillState}` : "";
                   return (
                     <tr key={slot.id} className="border-t border-[var(--ink)]/10 align-top">
                       <td className="py-3">
@@ -194,13 +198,18 @@ export default async function ClubPage({
                         {ticketed ? " each" : ""}
                       </td>
                       <td>
-                        {ticketed || slot.capacity > 1
-                          ? `${sold}/${slot.capacity} filled · ${remaining} left${expired ? " · expired" : slot.status === "cancelled" ? " · closed" : slot.fillState !== "collecting" ? ` · ${slot.fillState}` : ""}`
-                          : expired
-                            ? "expired"
-                            : slot.fillState !== "collecting"
-                              ? `${slot.status} · ${slot.fillState}`
-                              : slot.status}
+                        <span className="font-mono text-xs tracking-wide uppercase">
+                          {sold} signed in · max {slot.capacity}
+                        </span>
+                        <span className="mt-1 block text-[var(--ink)]/55">
+                          {ticketed || slot.capacity > 1
+                            ? `${remaining} left${expired ? " · expired" : slot.status === "cancelled" ? " · closed" : ""}${fillNote}`
+                            : expired
+                              ? "expired"
+                              : slot.fillState !== "collecting"
+                                ? `${slot.status} · ${slot.fillState}`
+                                : slot.status}
+                        </span>
                       </td>
                       <td>
                         {paid.length === 0 ? (
@@ -239,6 +248,7 @@ export default async function ClubPage({
           </div>
         )}
       </section>
+      <ClubGroupSection venueName={venue.name} />
     </main>
   );
 }

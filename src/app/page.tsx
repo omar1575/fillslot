@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { CategoryCollage } from "@/components/activity-graphic";
 import { CategoryFilters } from "@/components/category-filters";
 import { DealTicket, EmptyDeals, toDealTicket } from "@/components/deal-ticket";
@@ -6,12 +8,16 @@ import { parseCategory } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getOpenDeals } from "@/lib/queries";
 import { SetupNeeded } from "@/components/setup-needed";
+import { isVendorRole } from "@/lib/audience";
 
 export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const session = await auth();
+  if (isVendorRole(session?.user?.role)) redirect("/club");
+
   const query = await searchParams;
   const category = parseCategory(query.category);
   if (!isSupabaseConfigured()) return <SetupNeeded />;
@@ -20,37 +26,40 @@ export default async function HomePage({
 
   return (
     <main>
-      <section className="relative overflow-hidden bg-[var(--ink)] text-[var(--ticket)]">
+      <section className="night relative overflow-hidden">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div>
             <p className="font-mono text-[11px] tracking-[0.28em] text-[var(--ball)] uppercase">
               Maastricht · leftover hours and tickets
             </p>
-            <h1 className="mt-4 max-w-xl font-display text-5xl leading-[0.92] text-white sm:text-7xl">
+            <h1 className="mt-4 max-w-xl font-display text-5xl leading-[0.92] text-[var(--cream)] sm:text-7xl">
               Empty slots.
               <span className="block text-[var(--ball)]">Cheaper hours.</span>
             </h1>
-            <p className="mt-6 max-w-lg text-lg text-white/75">
+            <p className="mt-6 max-w-lg text-lg text-[var(--cream)]/75">
               Venues dump leftover padel courts, chairs, rooms, lanes, cinema seats, and stadium
               tickets onto Fillslot. You pay before you go. They take a smaller fee than an empty hour.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/deals"
-                className="bg-[var(--ball)] px-5 py-3 font-display text-[var(--ink)]"
-              >
-                See today&apos;s leftovers
-              </Link>
-              <Link href="/club" className="border border-white/30 px-5 py-3 text-white">
-                List empty hours
+              {session ? (
+                <Link href="/plans" className="btn-ball">
+                  Join a plan
+                </Link>
+              ) : (
+                <Link href="/login" className="btn-ball">
+                  Sign in
+                </Link>
+              )}
+              <Link href="/deals" className="btn-ghost">
+                See leftovers
               </Link>
             </div>
           </div>
-          <CategoryCollage className="w-full drop-shadow-[12px_16px_0_#d4f34a]" />
+          <CategoryCollage className="w-full shadow-ball" />
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+      <section className="page !py-12 sm:!py-16">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">

@@ -1,4 +1,7 @@
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { getDb } from "@/db";
+import { venues } from "@/db/schema";
 import { fulfillCheckoutSession, releaseCheckoutHold } from "@/lib/booking";
 import { getStripe } from "@/lib/stripe";
 
@@ -29,15 +32,19 @@ export async function POST(request: Request) {
     }
   }
 
-  if (event.type === "checkout.session.expired") {
+  if (event.type === "checkout.session.async_payment_succeeded") {
+    await fulfillCheckoutSession(event.data.object);
+  }
+
+  if (
+    event.type === "checkout.session.expired" ||
+    event.type === "checkout.session.async_payment_failed"
+  ) {
     await releaseCheckoutHold(event.data.object);
   }
 
   if (event.type === "account.updated") {
     const account = event.data.object;
-    const { eq } = await import("drizzle-orm");
-    const { getDb } = await import("@/db");
-    const { venues } = await import("@/db/schema");
     const db = await getDb();
     await db
       .update(venues)

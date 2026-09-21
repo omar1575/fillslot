@@ -4,7 +4,7 @@ import { cn } from "cn";
 import type { ActivityCategory, FillMode } from "@/db/schema";
 import { CATEGORY_LABELS, resourceLabel, usesSharedInventory } from "@/lib/constants";
 import { discountPercent, formatEuro } from "@/lib/money";
-import { formatDate, formatTimeRange } from "@/lib/time";
+import { formatDate, formatTime, formatTimeRange } from "@/lib/time";
 import type { DealRow } from "@/lib/queries";
 
 export type DealTicketData = {
@@ -65,20 +65,26 @@ export function DealTicket({
   const inner = (
     <article
       className={cn(
-        "ticket group relative grid overflow-hidden bg-[var(--ticket)] text-[var(--ink)] shadow-[6px_8px_0_var(--ink)] transition-transform",
+        "ticket group relative grid overflow-hidden bg-[var(--ticket)] text-[var(--ink)] shadow-ticket transition-transform",
         href && "hover:-translate-y-0.5",
-        compact ? "grid-cols-[88px_1fr]" : "grid-cols-[108px_1fr] md:grid-cols-[124px_1fr]",
+        compact
+          ? "grid-cols-[80px_1fr] sm:grid-cols-[88px_1fr]"
+          : "grid-cols-[92px_1fr] sm:grid-cols-[112px_1fr] md:grid-cols-[128px_1fr]",
       )}
     >
-      <div className="relative flex flex-col justify-between border-r border-dashed border-[var(--ink)]/25 bg-[var(--turf)] px-4 py-4 text-[var(--ball)]">
-        <p className="font-mono text-[10px] tracking-[0.22em] uppercase">
+      <div className="relative flex flex-col justify-between bg-[var(--turf)] py-3 pr-3 pl-2.5 text-[var(--cream)] sm:px-4 sm:py-4 sm:pr-5">
+        <p className="font-mono text-[9px] tracking-[0.22em] text-[var(--cream)]/70 uppercase sm:text-[10px]">
           {CATEGORY_LABELS[deal.category]}
         </p>
-        <p className="font-display text-3xl leading-none md:text-4xl">
-          {formatTimeRange(deal.startsAt, deal.endsAt).slice(0, 5)}
+        <p className="font-display text-xl leading-none sm:text-3xl md:text-4xl">
+          {formatTime(deal.startsAt)}
         </p>
-        <p className="font-mono text-[11px] text-white/80">{formatDate(deal.startsAt)}</p>
-        <span className="pointer-events-none absolute top-1/2 -right-2 size-4 -translate-y-1/2 rounded-full bg-[var(--wall)]" />
+        <p className="font-mono text-[10px] leading-tight whitespace-nowrap text-[var(--cream)]/80 sm:text-[11px]">
+          {formatDate(deal.startsAt)}
+        </p>
+        <span className="pointer-events-none absolute top-3 -right-2 size-3.5 rounded-full bg-[var(--wall)] sm:size-4" />
+        <span className="pointer-events-none absolute bottom-3 -right-2 size-3.5 rounded-full bg-[var(--wall)] sm:size-4" />
+        <span className="pointer-events-none absolute inset-y-3 right-0 w-px border-r border-dashed border-[var(--cream)]/35" />
       </div>
       <div className="relative flex flex-col gap-3 px-4 py-4 md:px-5">
         <div className="flex items-start justify-between gap-3">
@@ -126,7 +132,7 @@ export function EmptyDeals({
   action?: ReactNode;
 }) {
   return (
-    <div className="border border-dashed border-[var(--ink)]/20 bg-white/50 px-6 py-14 text-center">
+    <div className="ticket border border-dashed border-[var(--ink)]/25 bg-[var(--ticket)] px-6 py-14 text-center">
       <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">
         No leftover hours
       </p>

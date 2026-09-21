@@ -30,7 +30,7 @@ export default async function LoginPage({
   const configured = isSupabaseConfigured();
 
   return (
-    <main className="mx-auto w-full max-w-md px-4 py-16 sm:px-6">
+    <main className="page max-w-md">
       <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">
         Account
       </p>
@@ -40,7 +40,7 @@ export default async function LoginPage({
       </p>
 
       {!configured ? (
-        <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">
+        <p className="notice-error mt-4">
           Supabase is not configured. Copy `.env.example` to `.env.local` and add your project
           keys.
         </p>
@@ -122,9 +122,12 @@ export default async function LoginPage({
                       <button
                         type="submit"
                         disabled={!configured}
-                        className="h-10 w-full bg-[#d5e4f2] px-3 text-left text-sm hover:bg-[#c5d8ea] disabled:opacity-50"
+                        className="flex h-12 w-full items-center justify-between bg-[var(--glass)] px-3 text-left text-sm hover:bg-[var(--ball)] disabled:opacity-50"
                       >
-                        Continue as {account.name}
+                        <span>Continue as {account.name}</span>
+                        <span className="hidden font-mono text-[10px] text-[var(--ink)]/50 sm:inline">
+                          {account.email}
+                        </span>
                       </button>
                     </form>
                   ))}

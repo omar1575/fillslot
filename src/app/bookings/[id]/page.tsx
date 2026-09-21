@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { PeopleCount } from "@/components/people-count";
 import { formatEuro } from "@/lib/money";
 import { getBookingWithDetails } from "@/lib/queries";
 import { formatDateTime, formatTimeRange } from "@/lib/time";
 import { resourceLabel } from "@/lib/constants";
+import { requirePlayer } from "@/lib/audience";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,7 @@ export default async function BookingPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login?callbackUrl=/bookings");
+  const session = await requirePlayer("/bookings");
   const { id } = await params;
   const row = await getBookingWithDetails(id);
   if (!row) notFound();
@@ -25,20 +25,30 @@ export default async function BookingPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 py-16 sm:px-6">
+    <main className="page max-w-xl">
       <Link href="/bookings" className="font-mono text-xs tracking-[0.16em] uppercase text-[var(--ink)]/50">
         ← Bookings
       </Link>
-      <div className="ticket mt-6 bg-[var(--ticket)] p-8 text-center shadow-[8px_10px_0_var(--ink)]">
-        <p className="font-mono text-[11px] tracking-[0.22em] uppercase text-[var(--ink)]/50">
-          Check-in code
-        </p>
-        <p className="mt-4 font-display text-6xl tracking-[0.18em]">{row.booking.code}</p>
-        <h1 className="mt-6 font-display text-3xl">{row.venue.name}</h1>
-        <p className="mt-2 text-[var(--ink)]/70">{row.court.name}</p>
+      <div className="ticket mt-6 overflow-hidden bg-[var(--ticket)] text-center shadow-ticket">
+        <div className="bg-[var(--turf)] px-6 py-4 text-[var(--cream)]">
+          <p className="font-mono text-[11px] tracking-[0.22em] text-[var(--cream)]/70 uppercase">
+            Check-in ticket
+          </p>
+          <p className="mt-2 font-display text-5xl tracking-[0.18em] sm:text-6xl">
+            {row.booking.code}
+          </p>
+        </div>
+        <div className="px-6 py-8">
+          <h1 className="font-display text-3xl">{row.venue.name}</h1>
+          <p className="mt-2 text-[var(--ink)]/70">{row.court.name}</p>
+          <PeopleCount
+            signedIn={row.signedIn}
+            max={row.slot.capacity}
+            className="mt-3 text-[var(--ink)]/60"
+          />
         {row.booking.quantity > 1 ? (
           <p className="mt-1 text-sm text-[var(--ink)]/60">
-            {row.booking.quantity} leftover {resourceLabel(row.venue.category, row.booking.quantity)}
+            Your tickets: {row.booking.quantity} leftover {resourceLabel(row.venue.category, row.booking.quantity)}
           </p>
         ) : null}
         <p className="mt-4 font-mono">
@@ -50,6 +60,12 @@ export default async function BookingPage({
         <p className="mt-2 text-sm text-[var(--ink)]/60">
           {row.venue.address}, {row.venue.postalCode} {row.venue.city}
         </p>
+        {row.booking.status === "paid" || row.booking.status === "completed" ? (
+          <Link href={`/chat/${row.slot.id}`} className="btn-ink mt-6">
+            Open group chat
+          </Link>
+        ) : null}
+        </div>
       </div>
     </main>
   );

@@ -6,8 +6,17 @@ export function appUrl() {
   );
 }
 
+export function stripeSecretKey() {
+  return (
+    process.env.STRIPE_SECRET_KEY ||
+    process.env.STRIPE_API_KEY ||
+    process.env.stripe_api_key ||
+    ""
+  );
+}
+
 export function isStripeConfigured() {
-  return Boolean(process.env.STRIPE_SECRET_KEY);
+  return Boolean(stripeSecretKey());
 }
 
 export function isDevLoginEnabled() {

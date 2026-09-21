@@ -77,4 +77,17 @@ async function applyMerchantOnboardingSchema(db: ExecDb) {
       read_at timestamp
     )
   `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS group_message (
+      id text PRIMARY KEY,
+      room_id text NOT NULL,
+      user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+      body text NOT NULL,
+      created_at timestamp NOT NULL DEFAULT now()
+    )
+  `);
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS group_message_room_created_idx
+    ON group_message (room_id, created_at)
+  `);
 }

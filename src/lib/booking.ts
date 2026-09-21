@@ -12,10 +12,46 @@ import {
 import { appUrl, isStripeConfigured } from "@/lib/env";
 import { remainingCapacity } from "@/lib/inventory";
 import { commissionFromGross } from "@/lib/money";
+import { isConnectReady } from "@/lib/connect";
 import { getStripe } from "@/lib/stripe";
 import { formatDate, formatTimeRange } from "@/lib/time";
 
+const CHECKOUT_EXPIRE_BUFFER_SECONDS = 120;
+
 export class BookingError extends Error {}
+
+async function createCheckoutSession(
+  stripe: Stripe,
+  sessionParams: Stripe.Checkout.SessionCreateParams,
+) {
+  try {
+    return await stripe.checkout.sessions.create(sessionParams);
+  } catch (error) {
+    if (!isUnsupportedPaymentMethod(error)) throw error;
+    const { payment_method_types: _ignored, ...rest } = sessionParams;
+    return stripe.checkout.sessions.create({
+      ...rest,
+      payment_method_types: ["card"],
+    });
+  }
+}
+
+function isUnsupportedPaymentMethod(error: unknown) {
+  return (
+    error instanceof Stripe.errors.StripeInvalidRequestError &&
+    /payment_method_types|ideal/i.test(error.message)
+  );
+}
+
+function checkoutFailureMessage(error: unknown) {
+  if (error instanceof Stripe.errors.StripePermissionError) {
+    return "Stripe cannot start Checkout with this API key. Use the Secret key (sk_test_...) from the Stripe dashboard, or enable Checkout Sessions Write on the restricted key.";
+  }
+  if (error instanceof Stripe.errors.StripeAuthenticationError) {
+    return "Stripe rejected the API key. Check STRIPE_SECRET_KEY in .env.local.";
+  }
+  return "Could not start checkout.";
+}
 
 async function loadDeal(slotId: string) {
   const db = await getDb();
@@ -180,7 +216,7 @@ export async function fulfillPaidSlot(input: {
       grossCents: deal.slot.dealPriceCents,
       commissionCents,
       netCents: deal.slot.dealPriceCents - commissionCents,
-      payoutPending: deal.venue.stripeAccountId ? 0 : 1,
+      payoutPending: isConnectReady(deal.venue) ? 0 : 1,
       stripeCheckoutSessionId: input.checkoutSessionId,
       stripePaymentIntentId: input.paymentIntentId,
       status: "paid",
@@ -289,7 +325,7 @@ async function reserveTicketHold(slotId: string, userId: string, quantity: numbe
         grossCents,
         commissionCents,
         netCents: grossCents - commissionCents,
-        payoutPending: deal.venue.stripeAccountId ? 0 : 1,
+        payoutPending: isConnectReady(deal.venue) ? 0 : 1,
         stripeCheckoutSessionId: `hold_${bookingId}`,
         status: "pending",
       })
@@ -381,10 +417,13 @@ export async function startCheckout(slotId: string, userId: string, quantity = 1
     },
     success_url: `${appUrl()}/bookings/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl()}/deals/${slotId}?cancelled=1`,
-    expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_HOLD_MINUTES * 60,
+    expires_at:
+      Math.floor(Date.now() / 1000) +
+      CHECKOUT_HOLD_MINUTES * 60 +
+      CHECKOUT_EXPIRE_BUFFER_SECONDS,
   };
 
-  if (deal.venue.stripeAccountId && deal.venue.stripeDetailsSubmitted) {
+  if (isConnectReady(deal.venue) && deal.venue.stripeAccountId) {
     sessionParams.payment_intent_data = {
       application_fee_amount: commissionCents,
       transfer_data: { destination: deal.venue.stripeAccountId },
@@ -393,11 +432,11 @@ export async function startCheckout(slotId: string, userId: string, quantity = 1
 
   let session: Stripe.Checkout.Session;
   try {
-    session = await stripe.checkout.sessions.create(sessionParams);
+    session = await createCheckoutSession(stripe, sessionParams);
   } catch (error) {
     if (pending) await cancelPendingBooking(pending.id);
     else await releaseHold(slotId);
-    throw error;
+    throw new BookingError(checkoutFailureMessage(error));
   }
 
   if (pending) {
@@ -408,13 +447,18 @@ export async function startCheckout(slotId: string, userId: string, quantity = 1
   } else {
     await db
       .update(slots)
-      .set({ stripeCheckoutSessionId: session.id })
+      .set({
+        stripeCheckoutSessionId: session.id,
+        holdExpiresAt: session.expires_at
+          ? new Date(session.expires_at * 1000)
+          : undefined,
+      })
       .where(eq(slots.id, slotId));
   }
 
   if (!session.url) {
     if (pending) await cancelPendingBooking(pending.id, session.id);
-    else await releaseHold(slotId);
+    else await releaseHold(slotId, session.id);
     throw new BookingError("Could not start checkout.");
   }
 
@@ -439,12 +483,22 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   });
 }
 
-async function stripeRefundIfNeeded(paymentIntentId: string | null) {
+async function stripeRefundIfNeeded(
+  paymentIntentId: string | null,
+  options?: {
+    payoutPending: number;
+    venue: { stripeAccountId: string | null; stripeDetailsSubmitted: number };
+  },
+) {
   const stripe = getStripe();
   if (stripe && paymentIntentId?.startsWith("pi_")) {
-    await stripe.refunds.create({
+    const refund: Stripe.RefundCreateParams = {
       payment_intent: paymentIntentId,
-    });
+    };
+    if (options && !options.payoutPending && isConnectReady(options.venue)) {
+      refund.refund_application_fee = true;
+    }
+    await stripe.refunds.create(refund);
   }
 }
 
@@ -458,12 +512,18 @@ async function markBookingRefunded(bookingId: string) {
 
 export async function refundPaidBookingsForSlot(slotId: string) {
   const db = await getDb();
+  const deal = await loadDeal(slotId);
   const paid = await db
     .select()
     .from(bookings)
     .where(and(eq(bookings.slotId, slotId), eq(bookings.status, "paid")));
   for (const booking of paid) {
-    await stripeRefundIfNeeded(booking.stripePaymentIntentId);
+    await stripeRefundIfNeeded(
+      booking.stripePaymentIntentId,
+      deal
+        ? { payoutPending: booking.payoutPending, venue: deal.venue }
+        : undefined,
+    );
     await markBookingRefunded(booking.id);
   }
   return paid.length;
@@ -492,7 +552,10 @@ export async function refundAndCancelBooking(bookingId: string, venueOwnerId: st
     throw new BookingError("This booking is already closed.");
   }
 
-  await stripeRefundIfNeeded(row.booking.stripePaymentIntentId);
+  await stripeRefundIfNeeded(row.booking.stripePaymentIntentId, {
+    payoutPending: row.booking.payoutPending,
+    venue: row.venue,
+  });
   await markBookingRefunded(bookingId);
 
   if (usesSharedInventory(row.slot, row.venue.category)) {

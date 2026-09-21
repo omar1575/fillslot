@@ -4,6 +4,7 @@ import { parseCategory } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getOpenDeals } from "@/lib/queries";
 import { SetupNeeded } from "@/components/setup-needed";
+import { bounceVendorToDesk } from "@/lib/audience";
 
 export const dynamic = "force-dynamic";
 
@@ -14,13 +15,14 @@ export default async function DealsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await bounceVendorToDesk();
   const query = await searchParams;
   const category = parseCategory(query.category);
   if (!isSupabaseConfigured()) return <SetupNeeded />;
   const deals = await getOpenDeals(undefined, category);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+    <main className="page">
       <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">
         Maastricht only
       </p>
