@@ -72,6 +72,36 @@ export const DEV_ACCOUNTS = [
     id: "user_player_fillslot",
   },
   {
+    email: "lars@fillslot.test",
+    name: "Lars de Groot",
+    role: "consumer" as const,
+    id: "user_player_lars",
+  },
+  {
+    email: "noor@fillslot.test",
+    name: "Noor Hendriks",
+    role: "consumer" as const,
+    id: "user_player_noor",
+  },
+  {
+    email: "sem@fillslot.test",
+    name: "Sem Peeters",
+    role: "consumer" as const,
+    id: "user_player_sem",
+  },
+  {
+    email: "ines@fillslot.test",
+    name: "Ines Bakker",
+    role: "consumer" as const,
+    id: "user_player_ines",
+  },
+  {
+    email: "jules@fillslot.test",
+    name: "Jules Vermeulen",
+    role: "consumer" as const,
+    id: "user_player_jules",
+  },
+  {
     email: "club@plazapadel.test",
     name: "Plaza Padel Maastricht",
     role: "club" as const,
