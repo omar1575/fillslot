@@ -64,6 +64,18 @@ export function ActivityGraphic({
     );
   }
 
+  if (category === "go_karting") {
+    return (
+      <Frame className={className} label="Go-kart track">
+        <ellipse cx="320" cy="210" rx="210" ry="130" fill="#0C4A86" />
+        <ellipse cx="320" cy="210" rx="130" ry="70" fill="#07131F" />
+        <rect x="250" y="175" width="70" height="36" rx="8" fill="#D4F34A" />
+        <circle cx="262" cy="214" r="10" fill="#F7FBFF" />
+        <circle cx="308" cy="214" r="10" fill="#F7FBFF" />
+      </Frame>
+    );
+  }
+
   if (category === "cinema") {
     return (
       <Frame className={className} label="Cinema screen">
