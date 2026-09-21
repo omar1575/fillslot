@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "cn";
-import type { ActivityCategory } from "@/db/schema";
-import { CATEGORY_LABELS, isTicketCategory, resourceLabel } from "@/lib/constants";
+import type { ActivityCategory, FillMode } from "@/db/schema";
+import { CATEGORY_LABELS, resourceLabel, usesSharedInventory } from "@/lib/constants";
 import { discountPercent, formatEuro } from "@/lib/money";
 import { formatDate, formatTimeRange } from "@/lib/time";
 import type { DealRow } from "@/lib/queries";
@@ -15,6 +15,8 @@ export type DealTicketData = {
   category: ActivityCategory;
   remaining: number;
   capacity: number;
+  minPartySize: number;
+  fillMode: FillMode;
   startsAt: Date;
   endsAt: Date;
   originalPriceCents: number;
@@ -31,6 +33,8 @@ export function toDealTicket(deal: DealRow): DealTicketData {
     category: deal.venue.category,
     remaining: deal.remaining,
     capacity: deal.slot.capacity,
+    minPartySize: deal.slot.minPartySize,
+    fillMode: deal.slot.fillMode,
     startsAt: deal.slot.startsAt,
     endsAt: deal.slot.endsAt,
     originalPriceCents: deal.slot.originalPriceCents,
@@ -49,9 +53,14 @@ export function DealTicket({
   compact?: boolean;
 }) {
   const off = discountPercent(deal.originalPriceCents, deal.dealPriceCents);
-  const ticketed = isTicketCategory(deal.category);
-  const unitLine = ticketed
-    ? `${deal.remaining} ${resourceLabel(deal.category, deal.remaining)} left`
+  const shared = usesSharedInventory(deal, deal.category);
+  const joined = Math.max(0, deal.capacity - deal.remaining);
+  const unitLine = shared
+    ? deal.fillMode === "exact"
+      ? `${joined}/${deal.capacity} people · needs ${deal.capacity}`
+      : deal.fillMode === "threshold"
+        ? `${joined}/${deal.capacity} joined · min ${deal.minPartySize}`
+        : `${deal.remaining} ${resourceLabel(deal.category, deal.remaining)} left`
     : `1 ${resourceLabel(deal.category)}`;
   const inner = (
     <article

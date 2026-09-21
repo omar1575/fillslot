@@ -76,6 +76,18 @@ export function ActivityGraphic({
     );
   }
 
+  if (category === "escape_room") {
+    return (
+      <Frame className={className} label="Escape room">
+        <rect x="120" y="70" width="400" height="280" fill="#0C4A86" />
+        <rect x="170" y="120" width="110" height="160" fill="#1473C4" />
+        <rect x="360" y="120" width="110" height="160" fill="#1473C4" />
+        <circle cx="225" cy="185" r="14" fill="#D4F34A" />
+        <rect x="300" y="250" width="40" height="70" fill="#D4F34A" />
+      </Frame>
+    );
+  }
+
   if (category === "cinema") {
     return (
       <Frame className={className} label="Cinema screen">

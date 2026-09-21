@@ -6,8 +6,8 @@ import { bookings, courts, slots, users, venues } from "@/db/schema";
 import { makeBookingCode } from "@/lib/codes";
 import {
   CHECKOUT_HOLD_MINUTES,
-  isTicketCategory,
   leftoverDescription,
+  usesSharedInventory,
 } from "@/lib/constants";
 import { appUrl, isStripeConfigured } from "@/lib/env";
 import { remainingCapacity } from "@/lib/inventory";
@@ -104,10 +104,10 @@ export async function releaseCheckoutHold(session: Stripe.Checkout.Session) {
   }
 }
 
-async function syncTicketSlotStatus(slotId: string) {
+export async function syncSharedSlotStatus(slotId: string) {
   const db = await getDb();
   const deal = await loadDeal(slotId);
-  if (!deal || !isTicketCategory(deal.venue.category)) return;
+  if (!deal || !usesSharedInventory(deal.slot, deal.venue.category)) return;
   if (deal.slot.status === "cancelled") return;
 
   const slotBookings = await db
@@ -156,7 +156,7 @@ export async function fulfillPaidSlot(input: {
     }
   }
 
-  if (isTicketCategory(deal.venue.category)) {
+  if (usesSharedInventory(deal.slot, deal.venue.category)) {
     throw new BookingError("That leftover hold expired.");
   }
 
@@ -196,7 +196,13 @@ export async function fulfillPaidSlot(input: {
     })
     .where(eq(slots.id, input.slotId));
 
+  await maybeConfirmFill(input.slotId);
   return booking;
+}
+
+async function maybeConfirmFill(slotId: string) {
+  const { confirmFilledSlot } = await import("@/lib/fill");
+  await confirmFilledSlot(slotId);
 }
 
 async function payPendingBooking(
@@ -221,8 +227,9 @@ async function payPendingBooking(
     .where(eq(bookings.id, bookingId))
     .returning();
 
-  if (isTicketCategory(category)) {
-    await syncTicketSlotStatus(input.slotId);
+  const deal = await loadDeal(input.slotId);
+  if (deal && usesSharedInventory(deal.slot, category)) {
+    await syncSharedSlotStatus(input.slotId);
   } else {
     await db
       .update(slots)
@@ -233,6 +240,7 @@ async function payPendingBooking(
       })
       .where(eq(slots.id, input.slotId));
   }
+  await maybeConfirmFill(input.slotId);
   return updated;
 }
 
@@ -264,7 +272,7 @@ async function reserveTicketHold(slotId: string, userId: string, quantity: numbe
       .where(eq(bookings.slotId, slotId));
     const remaining = remainingCapacity(locked.capacity, slotBookings);
     if (quantity > remaining) {
-      throw new BookingError("Not enough leftover tickets left.");
+      throw new BookingError("Not enough leftover spots left.");
     }
 
     const bookingId = crypto.randomUUID();
@@ -298,10 +306,14 @@ export async function startCheckout(slotId: string, userId: string, quantity = 1
   }
 
   const db = await getDb();
-  const ticketed = isTicketCategory(deal.venue.category);
-  const qty = ticketed ? quantity : 1;
+  const shared = usesSharedInventory(deal.slot, deal.venue.category);
+  const qty = shared ? quantity : 1;
 
-  if (!ticketed) {
+  if (deal.slot.fillState === "refunded" || deal.slot.status === "cancelled") {
+    throw new BookingError("That leftover is gone.");
+  }
+
+  if (!shared) {
     const existingPaid = await db.query.bookings.findFirst({
       where: and(eq(bookings.slotId, slotId), eq(bookings.status, "paid")),
     });
@@ -318,7 +330,7 @@ export async function startCheckout(slotId: string, userId: string, quantity = 1
     }
   }
 
-  const pending = ticketed ? await reserveTicketHold(slotId, userId, qty) : null;
+  const pending = shared ? await reserveTicketHold(slotId, userId, qty) : null;
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
   });
@@ -427,6 +439,36 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   });
 }
 
+async function stripeRefundIfNeeded(paymentIntentId: string | null) {
+  const stripe = getStripe();
+  if (stripe && paymentIntentId?.startsWith("pi_")) {
+    await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+    });
+  }
+}
+
+async function markBookingRefunded(bookingId: string) {
+  const db = await getDb();
+  await db
+    .update(bookings)
+    .set({ status: "refunded" })
+    .where(and(eq(bookings.id, bookingId), eq(bookings.status, "paid")));
+}
+
+export async function refundPaidBookingsForSlot(slotId: string) {
+  const db = await getDb();
+  const paid = await db
+    .select()
+    .from(bookings)
+    .where(and(eq(bookings.slotId, slotId), eq(bookings.status, "paid")));
+  for (const booking of paid) {
+    await stripeRefundIfNeeded(booking.stripePaymentIntentId);
+    await markBookingRefunded(booking.id);
+  }
+  return paid.length;
+}
+
 export async function refundAndCancelBooking(bookingId: string, venueOwnerId: string) {
   const db = await getDb();
   const [row] = await db
@@ -450,20 +492,11 @@ export async function refundAndCancelBooking(bookingId: string, venueOwnerId: st
     throw new BookingError("This booking is already closed.");
   }
 
-  const stripe = getStripe();
-  if (stripe && row.booking.stripePaymentIntentId?.startsWith("pi_")) {
-    await stripe.refunds.create({
-      payment_intent: row.booking.stripePaymentIntentId,
-    });
-  }
+  await stripeRefundIfNeeded(row.booking.stripePaymentIntentId);
+  await markBookingRefunded(bookingId);
 
-  await db
-    .update(bookings)
-    .set({ status: "refunded" })
-    .where(eq(bookings.id, bookingId));
-
-  if (isTicketCategory(row.venue.category)) {
-    await syncTicketSlotStatus(row.slot.id);
+  if (usesSharedInventory(row.slot, row.venue.category)) {
+    await syncSharedSlotStatus(row.slot.id);
   } else {
     await db
       .update(slots)
@@ -480,7 +513,7 @@ export async function cancelOpenSlot(slotId: string, venueOwnerId: string) {
     throw new BookingError("You cannot cancel this slot.");
   }
 
-  if (isTicketCategory(deal.venue.category)) {
+  if (usesSharedInventory(deal.slot, deal.venue.category)) {
     await db
       .update(slots)
       .set({ status: "cancelled", holdExpiresAt: null })

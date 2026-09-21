@@ -1,10 +1,13 @@
-import type { ActivityCategory } from "@/db/schema";
+import type { ActivityCategory, FillMode, Slot } from "@/db/schema";
 
 export const APP_NAME = "Fillslot";
 export const DEFAULT_CITY = "Maastricht";
 export const TIMEZONE = "Europe/Amsterdam";
 export const DEFAULT_COMMISSION_BPS = 1500;
 export const CHECKOUT_HOLD_MINUTES = 30;
+export const FILL_INVITE_MINUTES = 60;
+export const FILL_REFUND_MINUTES = 15;
+export const SCHEDULE_WEEKS_AHEAD = 2;
 
 export const ACTIVITY_CATEGORIES = [
   "padel",
@@ -14,6 +17,7 @@ export const ACTIVITY_CATEGORIES = [
   "cinema",
   "stadium",
   "go_karting",
+  "escape_room",
 ] as const satisfies readonly ActivityCategory[];
 
 export const TICKET_CATEGORIES = ["cinema", "stadium"] as const satisfies readonly ActivityCategory[];
@@ -26,6 +30,7 @@ export const CATEGORY_LABELS: Record<ActivityCategory, string> = {
   cinema: "Cinema",
   stadium: "Stadium",
   go_karting: "Go-karting",
+  escape_room: "Escape room",
 };
 
 export const RESOURCE_LABELS: Record<ActivityCategory, string> = {
@@ -36,7 +41,140 @@ export const RESOURCE_LABELS: Record<ActivityCategory, string> = {
   cinema: "seat",
   stadium: "ticket",
   go_karting: "kart",
+  escape_room: "room",
 };
+
+export const WEEKDAYS = [
+  { id: 1, label: "Monday", short: "Mon" },
+  { id: 2, label: "Tuesday", short: "Tue" },
+  { id: 3, label: "Wednesday", short: "Wed" },
+  { id: 4, label: "Thursday", short: "Thu" },
+  { id: 5, label: "Friday", short: "Fri" },
+  { id: 6, label: "Saturday", short: "Sat" },
+  { id: 7, label: "Sunday", short: "Sun" },
+] as const;
+
+export type CategoryFillDefault = {
+  fillMode: FillMode;
+  minPartySize: number;
+  capacity: number;
+  sessionMinutes: number;
+  originalPrice: string;
+  dealPrice: string;
+  start: string;
+  end: string;
+};
+
+export const CATEGORY_FILL_DEFAULTS: Record<ActivityCategory, CategoryFillDefault> = {
+  padel: {
+    fillMode: "exact",
+    minPartySize: 4,
+    capacity: 4,
+    sessionMinutes: 90,
+    originalPrice: "36",
+    dealPrice: "18",
+    start: "14:00",
+    end: "17:00",
+  },
+  escape_room: {
+    fillMode: "exact",
+    minPartySize: 4,
+    capacity: 4,
+    sessionMinutes: 60,
+    originalPrice: "40",
+    dealPrice: "22",
+    start: "16:00",
+    end: "20:00",
+  },
+  go_karting: {
+    fillMode: "threshold",
+    minPartySize: 6,
+    capacity: 12,
+    sessionMinutes: 30,
+    originalPrice: "49",
+    dealPrice: "25",
+    start: "17:00",
+    end: "20:00",
+  },
+  bowling: {
+    fillMode: "threshold",
+    minPartySize: 2,
+    capacity: 6,
+    sessionMinutes: 60,
+    originalPrice: "32",
+    dealPrice: "16",
+    start: "15:00",
+    end: "18:00",
+  },
+  cinema: {
+    fillMode: "cap",
+    minPartySize: 1,
+    capacity: 24,
+    sessionMinutes: 120,
+    originalPrice: "14",
+    dealPrice: "7",
+    start: "19:00",
+    end: "23:00",
+  },
+  stadium: {
+    fillMode: "cap",
+    minPartySize: 1,
+    capacity: 8,
+    sessionMinutes: 120,
+    originalPrice: "28",
+    dealPrice: "14",
+    start: "14:30",
+    end: "16:30",
+  },
+  hair: {
+    fillMode: "cap",
+    minPartySize: 1,
+    capacity: 1,
+    sessionMinutes: 45,
+    originalPrice: "45",
+    dealPrice: "22",
+    start: "14:00",
+    end: "16:30",
+  },
+  spa: {
+    fillMode: "cap",
+    minPartySize: 1,
+    capacity: 1,
+    sessionMinutes: 60,
+    originalPrice: "80",
+    dealPrice: "40",
+    start: "16:00",
+    end: "18:00",
+  },
+};
+
+const CATEGORY_INTERESTS: Record<ActivityCategory, string[]> = {
+  padel: ["padel"],
+  bowling: ["bowling"],
+  go_karting: ["go-karting"],
+  cinema: ["movies"],
+  escape_room: ["escape-room"],
+  stadium: ["music"],
+  hair: [],
+  spa: [],
+};
+
+export function interestsForCategory(category: ActivityCategory) {
+  return CATEGORY_INTERESTS[category];
+}
+
+export function usesSharedInventory(
+  slot: Pick<Slot, "capacity" | "fillMode">,
+  category: ActivityCategory,
+) {
+  if (isTicketCategory(category)) return true;
+  if (slot.fillMode === "threshold" || slot.fillMode === "exact") return true;
+  return slot.capacity > 1;
+}
+
+export function usesFillThreshold(slot: Pick<Slot, "fillMode">) {
+  return slot.fillMode === "threshold" || slot.fillMode === "exact";
+}
 
 export function isTicketCategory(category: ActivityCategory) {
   return (TICKET_CATEGORIES as readonly ActivityCategory[]).includes(category);

@@ -1,11 +1,13 @@
-import { and, asc, eq, gt, inArray, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lt, or } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
   bookings,
   courts,
+  notices,
   slots,
   users,
   venues,
+  weeklyWindows,
   type ActivityCategory,
   type Booking,
   type Court,
@@ -13,7 +15,7 @@ import {
   type User,
   type Venue,
 } from "@/db/schema";
-import { DEFAULT_CITY, isTicketCategory, parseCategory } from "@/lib/constants";
+import { DEFAULT_CITY, parseCategory, usesSharedInventory } from "@/lib/constants";
 import { remainingCapacity } from "@/lib/inventory";
 
 export function isSlotBookable(slot: Pick<Slot, "status" | "holdExpiresAt" | "startsAt">, now = new Date()) {
@@ -36,8 +38,9 @@ function isDealListed(row: DealRow, now = new Date()) {
   if (row.venue.status !== "approved") return false;
   if (row.slot.startsAt <= now) return false;
   if (row.slot.status === "cancelled") return false;
-  if (isTicketCategory(row.venue.category)) {
-    return row.slot.status !== "booked" && row.remaining > 0;
+  if (row.slot.fillState === "refunded") return false;
+  if (usesSharedInventory(row.slot, row.venue.category)) {
+    return row.remaining > 0;
   }
   return isSlotBookable(row.slot, now);
 }
@@ -69,6 +72,13 @@ async function attachRemaining(
 }
 
 export async function getOpenDeals(city = DEFAULT_CITY, category?: ActivityCategory | string) {
+  try {
+    const { processFillDeadlines } = await import("@/lib/fill");
+    await processFillDeadlines();
+  } catch {
+    // Local demo still lists leftovers if the fill job cannot run.
+  }
+
   const db = await getDb();
   const now = new Date();
   const parsedCategory = parseCategory(category);
@@ -243,4 +253,29 @@ export async function getPendingVenues() {
 export async function getAllVenues() {
   const db = await getDb();
   return db.select().from(venues).orderBy(asc(venues.name));
+}
+
+export async function getWeeklyWindowsForVenue(venueId: string) {
+  const db = await getDb();
+  return db
+    .select()
+    .from(weeklyWindows)
+    .where(eq(weeklyWindows.venueId, venueId))
+    .orderBy(asc(weeklyWindows.weekday), asc(weeklyWindows.startMinute));
+}
+
+export async function getUserNotices(userId: string) {
+  const db = await getDb();
+  return db
+    .select({
+      notice: notices,
+      slot: slots,
+      venue: venues,
+    })
+    .from(notices)
+    .leftJoin(slots, eq(notices.slotId, slots.id))
+    .leftJoin(courts, eq(slots.courtId, courts.id))
+    .leftJoin(venues, eq(courts.venueId, venues.id))
+    .where(eq(notices.userId, userId))
+    .orderBy(desc(notices.createdAt));
 }

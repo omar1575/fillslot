@@ -29,6 +29,10 @@ export async function SiteHeader() {
                 <Link href="/club" className="hover:text-[var(--turf)]">
                   Club
                 </Link>
+              ) : session ? (
+                <Link href="/club/onboarding" className="hover:text-[var(--turf)]">
+                  For venues
+                </Link>
               ) : null}
               {role === "admin" ? (
                 <Link href="/admin/venues" className="hover:text-[var(--turf)]">

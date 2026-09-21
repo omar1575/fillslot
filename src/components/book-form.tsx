@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { bookSlotAction } from "@/app/actions/book";
-import type { ActivityCategory } from "@/db/schema";
-import { isTicketCategory, resourceLabel } from "@/lib/constants";
+import type { ActivityCategory, FillMode } from "@/db/schema";
+import { resourceLabel, usesSharedInventory } from "@/lib/constants";
 import { formatEuro } from "@/lib/money";
 
 function Submit({ label }: { label: string }) {
@@ -23,19 +23,23 @@ function Submit({ label }: { label: string }) {
 export function BookForm({
   slotId,
   category,
+  fillMode,
+  capacity,
   unitPriceCents,
   remaining,
   disabled,
 }: {
   slotId: string;
   category: ActivityCategory;
+  fillMode: FillMode;
+  capacity: number;
   unitPriceCents: number;
   remaining: number;
   disabled?: boolean;
 }) {
-  const ticketed = isTicketCategory(category);
+  const shared = usesSharedInventory({ capacity, fillMode }, category);
   const [quantity, setQuantity] = useState(1);
-  const qty = ticketed ? Math.min(remaining, Math.max(1, quantity)) : 1;
+  const qty = shared ? Math.min(remaining, Math.max(1, quantity)) : 1;
   const total = unitPriceCents * qty;
   const label = disabled
     ? "No longer available"
@@ -56,17 +60,17 @@ export function BookForm({
   return (
     <form action={bookSlotAction} className="space-y-4">
       <input type="hidden" name="slotId" value={slotId} />
-      {ticketed ? (
+      {shared ? (
         <div>
           <label htmlFor="quantity" className="font-mono text-[11px] tracking-[0.16em] uppercase text-white/60">
-            {resourceLabel(category, 2)}
+            People
           </label>
           <div className="mt-2 flex items-center gap-3">
             <button
               type="button"
               className="size-10 bg-white/10 text-xl"
               onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-              aria-label="Fewer tickets"
+              aria-label="Fewer people"
             >
               −
             </button>
@@ -84,7 +88,7 @@ export function BookForm({
               type="button"
               className="size-10 bg-white/10 text-xl"
               onClick={() => setQuantity((value) => Math.min(remaining, value + 1))}
-              aria-label="More tickets"
+              aria-label="More people"
             >
               +
             </button>

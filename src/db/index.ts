@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
+import { ensureMerchantOnboardingSchema } from "./ensure-merchant";
 import { seed } from "./seed";
 import { requireDatabaseUrl } from "@/lib/env";
 
@@ -22,18 +23,21 @@ async function createPostgresDb(): Promise<AppDb> {
   const pooled = url.includes("pooler") || url.includes("pgbouncer=true");
   const client = postgres(url, { max: 4, prepare: pooled ? false : undefined });
   const db = drizzle(client, { schema });
+  await ensureMerchantOnboardingSchema(db);
   await maybeSeed(db);
   return db;
 }
 
-export function getDb(): Promise<AppDb> {
+export async function getDb(): Promise<AppDb> {
   if (!globalForDb.fillslotDb) {
     globalForDb.fillslotDb = createPostgresDb();
     globalForDb.fillslotDb.catch(() => {
       globalForDb.fillslotDb = undefined;
     });
   }
-  return globalForDb.fillslotDb;
+  const db = await globalForDb.fillslotDb;
+  await ensureMerchantOnboardingSchema(db);
+  return db;
 }
 
 export type { AppDb };

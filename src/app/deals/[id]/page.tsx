@@ -4,7 +4,8 @@ import { auth } from "@/auth";
 import { ActivityGraphic } from "@/components/activity-graphic";
 import { BookForm } from "@/components/book-form";
 import { DealTicket, toDealTicket } from "@/components/deal-ticket";
-import { isTicketCategory, leftoverDescription, resourceLabel } from "@/lib/constants";
+import { leftoverDescription, usesSharedInventory } from "@/lib/constants";
+import { fillDeadlineCopy, fillRuleCopy } from "@/lib/fill-rules";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatEuro, discountPercent } from "@/lib/money";
 import { getDealById, isDealBookable } from "@/lib/queries";
@@ -43,7 +44,9 @@ export default async function DealPage({
   const error = typeof query.error === "string" ? query.error : null;
   const cancelled = query.cancelled === "1";
   const off = discountPercent(deal.slot.originalPriceCents, deal.slot.dealPriceCents);
-  const ticketed = isTicketCategory(deal.venue.category);
+  const shared = usesSharedInventory(deal.slot, deal.venue.category);
+  const fillCopy = fillRuleCopy(deal.slot);
+  const deadlineCopy = fillDeadlineCopy(deal.slot);
 
   return (
     <main className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr] sm:px-6">
@@ -69,13 +72,17 @@ export default async function DealPage({
         <h2 className="mt-2 font-display text-3xl">{formatDateTime(deal.slot.startsAt)}</h2>
         <p className="mt-4 text-sm text-white/70">
           {deal.court.name} · −{off}% vs the usual {formatEuro(deal.slot.originalPriceCents)}
-          {ticketed ? ` per ${resourceLabel(deal.venue.category)}` : ""}
+          {shared ? ` per person` : ""}
         </p>
         <p className="mt-2 font-display text-4xl">{formatEuro(deal.slot.dealPriceCents)}</p>
         <p className="mt-2 text-sm text-white/55">
-          Fillslot keeps 15% as commission. {leftoverDescription(deal.venue.category)} unless the
-          venue cancels.
+          Fillslot keeps 15% as commission.
+          {deadlineCopy
+            ? ""
+            : ` ${leftoverDescription(deal.venue.category)} unless the venue cancels.`}
         </p>
+        <p className="mt-3 text-sm text-[var(--ball)]">{fillCopy}</p>
+        {deadlineCopy ? <p className="mt-2 text-sm text-white/55">{deadlineCopy}</p> : null}
         {error ? <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">{error}</p> : null}
         {cancelled ? (
           <p className="mt-4 bg-white/10 px-3 py-2 text-sm">
@@ -94,6 +101,8 @@ export default async function DealPage({
             <BookForm
               slotId={deal.slot.id}
               category={deal.venue.category}
+              fillMode={deal.slot.fillMode}
+              capacity={deal.slot.capacity}
               unitPriceCents={deal.slot.dealPriceCents}
               remaining={deal.remaining}
               disabled={!bookable}

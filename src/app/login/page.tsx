@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import {
@@ -83,6 +84,14 @@ export default async function LoginPage({
           Create account
         </Button>
       </form>
+
+      <p className="mt-6 text-center text-sm text-[var(--ink)]/60">
+        Venue leftover hours?{" "}
+        <Link href="/club/onboarding" className="text-[var(--turf)] underline">
+          Dump them here
+        </Link>
+        .
+      </p>
 
       {isDevLoginEnabled() ? (
         <div className="mt-10 border border-dashed border-[var(--ink)]/20 p-4">

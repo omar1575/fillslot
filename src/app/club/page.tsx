@@ -6,15 +6,17 @@ import { cancelSlotAction, refundBookingAction } from "@/app/actions/slots";
 import { Button } from "@/components/ui/button";
 import { EmptyDeals } from "@/components/deal-ticket";
 import { formatEuro } from "@/lib/money";
-import { getClubDashboard, getVenueForOwner } from "@/lib/queries";
+import { getClubDashboard, getVenueForOwner, getWeeklyWindowsForVenue } from "@/lib/queries";
 import { isStripeConfigured } from "@/lib/env";
 import { syncConnectAccount } from "@/lib/connect";
-import { formatDate, formatTimeRange } from "@/lib/time";
+import { formatDate, formatTimeRange, formatClock } from "@/lib/time";
 import {
   CATEGORY_LABELS,
   isTicketCategory,
   resourceLabel,
+  WEEKDAYS,
 } from "@/lib/constants";
+import { fillRuleCopy } from "@/lib/fill-rules";
 
 export const metadata = { title: "Club" };
 
@@ -26,21 +28,13 @@ export default async function ClubPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/club");
   if (session.user.role !== "club" && session.user.role !== "admin") {
-    redirect("/");
+    redirect("/club/onboarding");
   }
 
   const query = await searchParams;
   const venue = await getVenueForOwner(session.user.id);
   if (!venue) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-16">
-        <h1 className="font-display text-4xl">No venue attached</h1>
-        <p className="mt-3 text-[var(--ink)]/70">
-          This account is a partner role without a venue. Seed the demo catalog or ask an admin to
-          attach one.
-        </p>
-      </main>
-    );
+    redirect("/club/onboarding");
   }
 
   if (query.connect === "return" && venue.stripeAccountId) {
@@ -48,6 +42,7 @@ export default async function ClubPage({
   }
 
   const dashboard = await getClubDashboard(venue.id);
+  const schedule = await getWeeklyWindowsForVenue(venue.id);
   const error = typeof query.error === "string" ? query.error : null;
   const payoutReady = Boolean(venue.stripeAccountId && venue.stripeDetailsSubmitted);
   const now = new Date();
@@ -66,15 +61,68 @@ export default async function ClubPage({
             Commission {venue.commissionBps / 100}% · {venue.city}
           </p>
         </div>
-        <Link
-          href="/club/slots/new"
-          className="w-fit bg-[var(--ball)] px-4 py-2 font-display text-[var(--ink)]"
-        >
-          List a leftover {ticketed ? resourceLabel(venue.category, 2) : "hour"}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/club/onboarding"
+            className="w-fit border border-[var(--ink)]/20 px-4 py-2 text-sm"
+          >
+            Edit leftover week
+          </Link>
+          <Link
+            href="/club/slots/new"
+            className="w-fit bg-[var(--ball)] px-4 py-2 font-display text-[var(--ink)]"
+          >
+            List a leftover {ticketed ? resourceLabel(venue.category, 2) : "hour"}
+          </Link>
+        </div>
       </div>
 
       {error ? <p className="mt-6 bg-[#c7342b] px-3 py-2 text-white">{error}</p> : null}
+
+      {venue.status === "pending" ? (
+        <p className="mt-6 bg-[var(--ball)] px-3 py-2 text-sm text-[var(--ink)]">
+          This venue is waiting on Fillslot approval. The leftover week is saved; it goes public once
+          an admin approves it.
+        </p>
+      ) : null}
+
+      <section className="mt-8 bg-white p-5 ring-1 ring-[var(--ink)]/10">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl">Leftover week</h2>
+            <p className="mt-1 max-w-xl text-sm text-[var(--ink)]/65">{venue.description}</p>
+          </div>
+        </div>
+        {schedule.length === 0 ? (
+          <p className="mt-4 text-sm text-[var(--ink)]/60">
+            No weekly leftover windows yet.{" "}
+            <Link href="/club/onboarding" className="underline">
+              Set the week
+            </Link>
+            .
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-[var(--ink)]/10">
+            {schedule.map((window) => {
+              const day = WEEKDAYS.find((item) => item.id === window.weekday)?.label ?? "Day";
+              return (
+                <li key={window.id} className="py-3 text-sm">
+                  <p className="font-medium">
+                    {day} {formatClock(window.startMinute)}–{formatClock(window.endMinute)} ·{" "}
+                    {window.sessionMinutes} min sessions
+                  </p>
+                  <p className="mt-1 text-[var(--ink)]/60">
+                    <span className="line-through opacity-50">
+                      {formatEuro(window.originalPriceCents)}
+                    </span>{" "}
+                    {formatEuro(window.dealPriceCents)} · {fillRuleCopy(window)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <section className="mt-8 bg-white p-5 ring-1 ring-[var(--ink)]/10">
         <h2 className="font-display text-2xl">Payouts</h2>
@@ -146,11 +194,13 @@ export default async function ClubPage({
                         {ticketed ? " each" : ""}
                       </td>
                       <td>
-                        {ticketed
-                          ? `${sold} sold · ${remaining} left${expired ? " · expired" : slot.status === "cancelled" ? " · closed" : ""}`
+                        {ticketed || slot.capacity > 1
+                          ? `${sold}/${slot.capacity} filled · ${remaining} left${expired ? " · expired" : slot.status === "cancelled" ? " · closed" : slot.fillState !== "collecting" ? ` · ${slot.fillState}` : ""}`
                           : expired
                             ? "expired"
-                            : slot.status}
+                            : slot.fillState !== "collecting"
+                              ? `${slot.status} · ${slot.fillState}`
+                              : slot.status}
                       </td>
                       <td>
                         {paid.length === 0 ? (

@@ -18,6 +18,7 @@ export const activityCategoryEnum = pgEnum("activity_category", [
   "cinema",
   "stadium",
   "go_karting",
+  "escape_room",
 ]);
 export const slotStatusEnum = pgEnum("slot_status", [
   "open",
@@ -31,6 +32,19 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "cancelled",
   "refunded",
   "completed",
+]);
+export const fillModeEnum = pgEnum("fill_mode", ["threshold", "exact", "cap"]);
+export const fillStateEnum = pgEnum("fill_state", [
+  "collecting",
+  "confirmed",
+  "inviting",
+  "refunded",
+]);
+export const noticeTypeEnum = pgEnum("notice_type", [
+  "fill_invite",
+  "switch_offer",
+  "confirmed",
+  "refunded",
 ]);
 
 export const users = pgTable("user", {
@@ -81,6 +95,25 @@ export const courts = pgTable("court", {
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
+export const weeklyWindows = pgTable("weekly_window", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  venueId: text("venue_id")
+    .notNull()
+    .references(() => venues.id, { onDelete: "cascade" }),
+  weekday: integer("weekday").notNull(),
+  startMinute: integer("start_minute").notNull(),
+  endMinute: integer("end_minute").notNull(),
+  sessionMinutes: integer("session_minutes").notNull(),
+  originalPriceCents: integer("original_price_cents").notNull(),
+  dealPriceCents: integer("deal_price_cents").notNull(),
+  fillMode: fillModeEnum("fill_mode").notNull().default("threshold"),
+  minPartySize: integer("min_party_size").notNull().default(1),
+  capacity: integer("capacity").notNull().default(1),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
 export const slots = pgTable(
   "slot",
   {
@@ -90,11 +123,19 @@ export const slots = pgTable(
     courtId: text("court_id")
       .notNull()
       .references(() => courts.id, { onDelete: "cascade" }),
+    weeklyWindowId: text("weekly_window_id").references(() => weeklyWindows.id, {
+      onDelete: "set null",
+    }),
     startsAt: timestamp("starts_at", { mode: "date" }).notNull(),
     endsAt: timestamp("ends_at", { mode: "date" }).notNull(),
     originalPriceCents: integer("original_price_cents").notNull(),
     dealPriceCents: integer("deal_price_cents").notNull(),
     capacity: integer("capacity").notNull().default(1),
+    minPartySize: integer("min_party_size").notNull().default(1),
+    fillMode: fillModeEnum("fill_mode").notNull().default("cap"),
+    fillState: fillStateEnum("fill_state").notNull().default("collecting"),
+    fillInviteSentAt: timestamp("fill_invite_sent_at", { mode: "date" }),
+    fillResolvedAt: timestamp("fill_resolved_at", { mode: "date" }),
     status: slotStatusEnum("status").notNull().default("open"),
     holdExpiresAt: timestamp("hold_expires_at", { mode: "date" }),
     stripeCheckoutSessionId: text("stripe_checkout_session_id"),
@@ -133,14 +174,34 @@ export const bookings = pgTable(
   ],
 );
 
+export const notices = pgTable("notice", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: noticeTypeEnum("type").notNull(),
+  slotId: text("slot_id").references(() => slots.id, { onDelete: "cascade" }),
+  relatedSlotId: text("related_slot_id").references(() => slots.id, {
+    onDelete: "set null",
+  }),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  readAt: timestamp("read_at", { mode: "date" }),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   venues: many(venues),
   bookings: many(bookings),
+  notices: many(notices),
 }));
 
 export const venuesRelations = relations(venues, ({ one, many }) => ({
   owner: one(users, { fields: [venues.ownerId], references: [users.id] }),
   courts: many(courts),
+  weeklyWindows: many(weeklyWindows),
 }));
 
 export const courtsRelations = relations(courts, ({ one, many }) => ({
@@ -148,8 +209,17 @@ export const courtsRelations = relations(courts, ({ one, many }) => ({
   slots: many(slots),
 }));
 
+export const weeklyWindowsRelations = relations(weeklyWindows, ({ one, many }) => ({
+  venue: one(venues, { fields: [weeklyWindows.venueId], references: [venues.id] }),
+  slots: many(slots),
+}));
+
 export const slotsRelations = relations(slots, ({ one, many }) => ({
   court: one(courts, { fields: [slots.courtId], references: [courts.id] }),
+  weeklyWindow: one(weeklyWindows, {
+    fields: [slots.weeklyWindowId],
+    references: [weeklyWindows.id],
+  }),
   bookings: many(bookings),
 }));
 
@@ -158,10 +228,20 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   user: one(users, { fields: [bookings.userId], references: [users.id] }),
 }));
 
+export const noticesRelations = relations(notices, ({ one }) => ({
+  user: one(users, { fields: [notices.userId], references: [users.id] }),
+  slot: one(slots, { fields: [notices.slotId], references: [slots.id] }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type Venue = typeof venues.$inferSelect;
 export type Court = typeof courts.$inferSelect;
+export type WeeklyWindow = typeof weeklyWindows.$inferSelect;
 export type Slot = typeof slots.$inferSelect;
 export type Booking = typeof bookings.$inferSelect;
+export type Notice = typeof notices.$inferSelect;
 export type UserRole = (typeof userRoleEnum.enumValues)[number];
 export type ActivityCategory = (typeof activityCategoryEnum.enumValues)[number];
+export type FillMode = (typeof fillModeEnum.enumValues)[number];
+export type FillState = (typeof fillStateEnum.enumValues)[number];
+export type NoticeType = (typeof noticeTypeEnum.enumValues)[number];

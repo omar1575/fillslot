@@ -19,7 +19,9 @@ export default async function NewSlotPage({
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/club/slots/new");
-  if (session.user.role !== "club" && session.user.role !== "admin") redirect("/");
+  if (session.user.role !== "club" && session.user.role !== "admin") {
+    redirect("/club/onboarding");
+  }
 
   const venue = await getVenueForOwner(session.user.id);
   if (!venue) redirect("/club");
