@@ -4,6 +4,17 @@ Too Good To Go for leftover padel court time. First city: Maastricht. First club
 
 Built for a MAIN (Maastricht AI & Tech Network) hackathon at SBE, Maastricht University.
 
+## Working together (two Cursor users)
+
+Repo: [github.com/omar1575/fillslot](https://github.com/omar1575/fillslot)
+
+1. Get invited as a collaborator, then `git clone git@github.com:omar1575/fillslot.git` and open that folder in Cursor (not a parent directory).
+2. Before you or your agent writes code: `git pull --rebase origin main`, then branch `yourname/topic`.
+3. Push often. Do not both edit `src/db/schema.ts`, `src/auth.ts`, `package.json`, or `src/app/globals.css` at the same time.
+4. Cursor agents in this repo automatically load `.cursor/rules/collaboration.mdc`.
+
+Suggested split for speed: one person owns **consumer** (`/`, `/deals`, `/bookings`, `/login`), the other owns **club + payments** (`/club`, Stripe, schema, seed).
+
 Clubs list empty hours at a discount. Players pay in advance (iDEAL or card). Fillslot takes 15% commission.
 
 ## Local

@@ -1,0 +1,35 @@
+---
+description: Two-person Cursor workflow so agents do not overwrite each other
+alwaysApply: true
+---
+
+# Fillslot pair workflow
+
+Two people (and two Cursor agents) share https://github.com/omar1575/fillslot. Treat `main` as sacred.
+
+## Before any code change
+
+1. `git checkout main && git pull --rebase origin main`
+2. Create or reuse a personal branch: `<yourname>/<short-topic>` (example: `omar/club-refunds`).
+3. Do not commit directly to `main` unless the other person is idle and you just merged a tiny fix.
+
+## While working
+
+- Touch the smallest set of files. Prefer adding files over rewriting shared ones.
+- **Hot files — one person at a time:** `src/db/schema.ts`, `src/db/seed.ts`, `src/auth.ts`, `package.json`, `src/app/globals.css`, `src/app/layout.tsx`.
+- If you must change a hot file, say so in the chat and push that commit first so the other person can pull.
+- Never `git push --force` to `main`. Never rewrite history the other person already pulled.
+- Keep commits small and push often so the other agent can pull.
+
+## After working
+
+1. `git push -u origin HEAD`
+2. Open a PR into `main` (or merge if you already agreed the branch is done).
+3. Tell the other person what changed.
+
+## Product facts both agents must keep
+
+- Marketplace for leftover bookable time; padel in Maastricht first.
+- English UI, euros, iDEAL + cards via Stripe, 15% commission.
+- One listing = one court for one time window. Pay before play. Non-refundable unless the club cancels.
+- Local without `DATABASE_URL` uses in-memory PGlite and reseeds Plaza Padel on boot.
