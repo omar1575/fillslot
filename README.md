@@ -6,6 +6,8 @@ Padel, hair, spa, bowling, cinema, and stadium surplus — clubs and venues dump
 
 Built for a MAIN (Maastricht AI & Tech Network) hackathon at SBE, Maastricht University.
 
+**Stack:** Next.js, Drizzle, Supabase Auth + Postgres, Stripe (iDEAL + cards). Sign in with email and password. Google and Apple come later.
+
 ## Working together (two Cursor users)
 
 Repo: [github.com/omar1575/fillslot](https://github.com/omar1575/fillslot)
@@ -23,21 +25,24 @@ Exclusive listings (padel, hair, spa, bowling) are one resource for one time win
 
 ## Local
 
+1. Create a Supabase project.
+2. In Authentication: set Site URL to `http://localhost:3000` and add redirect `http://localhost:3000/auth/callback`.
+3. Enable Email (email + password). Google and Apple can wait.
+4. Copy `.env.example` to `.env.local` and fill `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` (transaction pooler, port 6543), and `DIRECT_URL` (session pooler, port 5432).
+
 ```bash
 cp .env.example .env.local
-# set AUTH_SECRET (openssl rand -base64 32)
-
 npm install
 npm run db:generate   # already committed after first run
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
-Without `DATABASE_URL`, local development uses in-memory PGlite Postgres and seeds the six Maastricht demo venues on boot. Data resets when the dev server restarts. For a persistent database, point `DATABASE_URL` at Neon or any Postgres instance.
-
-Open [http://localhost:3000](http://localhost:3000). On `/login`, local demo buttons sign in as the player, each demo partner, or admin.
+Open [http://localhost:3000](http://localhost:3000). `/login` is email and password. In development, demo buttons sign in the seeded player, partners, and admin (password `fillslot-dev-local` unless you set `DEV_LOGIN_PASSWORD`).
 
 Without Stripe keys, booking confirms immediately (dev path). With `STRIPE_SECRET_KEY`, Checkout uses iDEAL + cards and Connect destination charges when the venue has finished onboarding.
 
-## Neon / Vercel
+## Vercel
 
-Set `DATABASE_URL` to a Neon Postgres URL, run `npm run db:generate && npm run db:migrate && npm run db:seed`, and add the Auth, Stripe, and Resend secrets listed in `.env.example`.
+Point `DATABASE_URL` at the Supabase pooler, `DIRECT_URL` at the direct Postgres URL, run `npm run db:migrate && npm run db:seed`, and add the Supabase and Stripe secrets listed in `.env.example`. Add the production URL to Supabase Auth redirect URLs.

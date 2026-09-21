@@ -1,106 +1,47 @@
-import NextAuth, { type NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
-import Resend from "next-auth/providers/resend";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { getDb } from "@/db";
-import {
-  accounts,
-  sessions,
-  users,
-  verificationTokens,
-  type UserRole,
-} from "@/db/schema";
-import { isDevLoginEnabled, isGoogleAuthConfigured } from "@/lib/env";
-import { sendMagicLink } from "@/lib/mail";
+import { users, type UserRole } from "@/db/schema";
+import { isSupabaseConfigured } from "@/lib/env";
+import { ensurePublicUser } from "@/lib/profile";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const db = await getDb();
+export type SessionUser = {
+  id: string;
+  email: string | null;
+  name: string | null;
+  image: string | null;
+  role: UserRole;
+};
 
-const providers: NextAuthConfig["providers"] = [
-  Resend({
-    apiKey: process.env.RESEND_API_KEY ?? "re_dev_placeholder",
-    from: process.env.EMAIL_FROM ?? "Fillslot <noreply@fillslot.local>",
-    sendVerificationRequest: async ({ identifier, url }) => {
-      await sendMagicLink(identifier, url);
+export type Session = {
+  user: SessionUser;
+};
+
+export async function auth(): Promise<Session | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  await ensurePublicUser(user);
+  const db = await getDb();
+  const row = await db.query.users.findFirst({
+    where: user.email
+      ? or(eq(users.id, user.id), eq(users.email, user.email))
+      : eq(users.id, user.id),
+  });
+  if (!row) return null;
+
+  return {
+    user: {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      image: row.image,
+      role: row.role,
     },
-  }),
-];
-
-if (isGoogleAuthConfigured()) {
-  providers.unshift(
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-  );
+  };
 }
-
-if (isDevLoginEnabled()) {
-  providers.push(
-    Credentials({
-      id: "dev-login",
-      name: "Dev login",
-      credentials: {
-        email: { label: "Email", type: "email" },
-      },
-      authorize: async (credentials) => {
-        const email = String(credentials?.email ?? "");
-        if (!email) return null;
-        const db = await getDb();
-        const user = await db.query.users.findFirst({
-          where: eq(users.email, email),
-        });
-        if (!user) return null;
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        };
-      },
-    }),
-  );
-}
-
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
-  session: { strategy: "jwt" },
-  trustHost: true,
-  pages: {
-    signIn: "/login",
-  },
-  providers,
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as { role?: UserRole }).role ?? "consumer";
-      }
-      if (!token.role && token.email) {
-        const db = await getDb();
-        const existing = await db.query.users.findFirst({
-          where: eq(users.email, String(token.email)),
-        });
-        if (existing) {
-          token.id = existing.id;
-          token.role = existing.role;
-        }
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = String(token.id ?? token.sub ?? "");
-        session.user.role = (token.role as UserRole) ?? "consumer";
-      }
-      return session;
-    },
-  },
-});

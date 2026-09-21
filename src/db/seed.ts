@@ -1,15 +1,15 @@
 import { eq } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
-import type { PgliteDatabase } from "drizzle-orm/pglite";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
 import { courts, slots, users, venues, type ActivityCategory } from "./schema";
 import { DEV_ACCOUNTS, TIMEZONE } from "@/lib/constants";
+import { devLoginPassword } from "@/lib/env";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { seedDemoEvents } from "./demo-events";
 
-type SeedDb =
-  | PgliteDatabase<typeof schema>
-  | PostgresJsDatabase<typeof schema>;
+type SeedDb = PostgresJsDatabase<typeof schema>;
 
 const PLAZA_COURTS = [
   "Padel 1 · Beks Interieur",
@@ -224,8 +224,31 @@ const CATALOG: CatalogVenue[] = [
   },
 ];
 
+async function ensureAuthUser(email: string, name: string) {
+  const admin = createSupabaseAdminClient();
+  const created = await admin.auth.admin.createUser({
+    email,
+    password: devLoginPassword(),
+    email_confirm: true,
+    user_metadata: { name },
+  });
+  if (created.data.user?.id) return created.data.user.id;
+
+  const listed = await admin.auth.admin.listUsers({ perPage: 200 });
+  const found = listed.data.users.find(
+    (user) => user.email?.toLowerCase() === email.toLowerCase(),
+  );
+  if (!found) {
+    throw new Error(
+      `Could not create or find Auth user ${email}: ${created.error?.message ?? "unknown error"}`,
+    );
+  }
+  return found.id;
+}
+
 async function ensureUsers(db: SeedDb) {
   for (const account of DEV_ACCOUNTS) {
+    const id = await ensureAuthUser(account.email, account.name);
     const existing = await db.query.users.findFirst({
       where: eq(users.email, account.email),
     });
@@ -236,7 +259,7 @@ async function ensureUsers(db: SeedDb) {
         .where(eq(users.id, existing.id));
     } else {
       await db.insert(users).values({
-        id: account.id,
+        id,
         email: account.email,
         name: account.name,
         role: account.role,
@@ -443,9 +466,11 @@ export async function seed(db: SeedDb) {
   for (const catalog of CATALOG) {
     extras.push(await ensureCatalogVenue(db, catalog));
   }
+  const demo = await seedDemoEvents(db);
   return {
     venueId: plaza.venueId,
-    slots: plaza.slots + extras.reduce((sum, item) => sum + item.slots, 0),
-    venues: 1 + extras.length,
+    slots: plaza.slots + extras.reduce((sum, item) => sum + item.slots, 0) + demo.inserted,
+    venues: 1 + extras.length + 1,
+    demo,
   };
 }

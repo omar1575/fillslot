@@ -13,6 +13,7 @@ export const ACTIVITY_CATEGORIES = [
   "bowling",
   "cinema",
   "stadium",
+  "go_karting",
 ] as const satisfies readonly ActivityCategory[];
 
 export const TICKET_CATEGORIES = ["cinema", "stadium"] as const satisfies readonly ActivityCategory[];
@@ -24,6 +25,7 @@ export const CATEGORY_LABELS: Record<ActivityCategory, string> = {
   bowling: "Bowling",
   cinema: "Cinema",
   stadium: "Stadium",
+  go_karting: "Go-karting",
 };
 
 export const RESOURCE_LABELS: Record<ActivityCategory, string> = {
@@ -33,6 +35,7 @@ export const RESOURCE_LABELS: Record<ActivityCategory, string> = {
   bowling: "lane",
   cinema: "seat",
   stadium: "ticket",
+  go_karting: "kart",
 };
 
 export function isTicketCategory(category: ActivityCategory) {
@@ -91,6 +94,12 @@ export const DEV_ACCOUNTS = [
     name: "Strike Boschstraat",
     role: "club" as const,
     id: "user_club_bowling",
+  },
+  {
+    email: "club@kartingbeatrixhaven.test",
+    name: "Karting Beatrixhaven",
+    role: "club" as const,
+    id: "user_club_karting",
   },
   {
     email: "club@lumiereleftover.test",

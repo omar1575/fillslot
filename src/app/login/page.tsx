@@ -2,15 +2,14 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import {
   devSignInAction,
-  googleSignInAction,
-  sendMagicLinkAction,
+  passwordSignInAction,
+  signUpAction,
 } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEV_ACCOUNTS } from "@/lib/constants";
-import { isDevLoginEnabled, isGoogleAuthConfigured } from "@/lib/env";
-import { readDevMailbox } from "@/lib/mail";
+import { isDevLoginEnabled, isSupabaseConfigured } from "@/lib/env";
 
 export const metadata = { title: "Sign in" };
 
@@ -25,7 +24,9 @@ export default async function LoginPage({
     typeof query.callbackUrl === "string" ? query.callbackUrl : "/";
   if (session) redirect(callbackUrl);
 
-  const mailbox = isDevLoginEnabled() ? await readDevMailbox() : [];
+  const error = typeof query.error === "string" ? query.error : null;
+  const sent = query.sent === "1";
+  const configured = isSupabaseConfigured();
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-16 sm:px-6">
@@ -34,39 +35,62 @@ export default async function LoginPage({
       </p>
       <h1 className="mt-2 font-display text-5xl">Sign in</h1>
       <p className="mt-3 text-[var(--ink)]/70">
-        Magic link to your email. No password. Book leftover hours and tickets, or list empty slots.
+        Use your email and password. Google and Apple sign-in come later.
       </p>
 
-      {typeof query.error === "string" ? (
+      {!configured ? (
         <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">
-          Sign-in failed. Try a demo account or another email.
+          Supabase is not configured. Copy `.env.example` to `.env.local` and add your project
+          keys.
         </p>
       ) : null}
 
-      <form action={sendMagicLinkAction} className="mt-8 space-y-4">
+      {error ? (
+        <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">{error}</p>
+      ) : null}
+
+      {sent ? (
+        <p className="mt-4 bg-[var(--ball)] px-3 py-2 text-sm text-[var(--ink)]">
+          Check your inbox to confirm your email, then sign in.
+        </p>
+      ) : null}
+
+      <form className="mt-8 space-y-4">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" type="email" required placeholder="you@club.nl" />
         </div>
-        <Button type="submit" className="h-11 w-full rounded-none bg-[var(--ink)] text-[var(--ball)]">
-          Email me a link
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" name="password" type="password" required minLength={6} />
+        </div>
+        <Button
+          formAction={passwordSignInAction}
+          type="submit"
+          disabled={!configured}
+          className="h-11 w-full rounded-none bg-[var(--ink)] text-[var(--ball)]"
+        >
+          Sign in
+        </Button>
+        <Button
+          formAction={signUpAction}
+          type="submit"
+          variant="outline"
+          disabled={!configured}
+          className="h-11 w-full rounded-none"
+        >
+          Create account
         </Button>
       </form>
-
-      {isGoogleAuthConfigured() ? (
-        <form action={googleSignInAction} className="mt-3">
-          <input type="hidden" name="callbackUrl" value={callbackUrl} />
-          <Button type="submit" variant="outline" className="h-11 w-full rounded-none">
-            Continue with Google
-          </Button>
-        </form>
-      ) : null}
 
       {isDevLoginEnabled() ? (
         <div className="mt-10 border border-dashed border-[var(--ink)]/20 p-4">
           <p className="font-mono text-[11px] tracking-[0.16em] uppercase text-[var(--ink)]/50">
             Local demo
+          </p>
+          <p className="mt-2 text-sm text-[var(--ink)]/60">
+            Seeded accounts use the local demo password from `.env.example`.
           </p>
           <div className="mt-3 grid gap-4">
             {(
@@ -88,7 +112,8 @@ export default async function LoginPage({
                     >
                       <button
                         type="submit"
-                        className="h-10 w-full bg-[#d5e4f2] px-3 text-left text-sm hover:bg-[#c5d8ea]"
+                        disabled={!configured}
+                        className="h-10 w-full bg-[#d5e4f2] px-3 text-left text-sm hover:bg-[#c5d8ea] disabled:opacity-50"
                       >
                         Continue as {account.name}
                       </button>
@@ -98,14 +123,6 @@ export default async function LoginPage({
               </div>
             ))}
           </div>
-          {mailbox[0] ? (
-            <p className="mt-4 text-sm">
-              Latest magic link:{" "}
-              <a className="underline" href={mailbox[0].url}>
-                {mailbox[0].to}
-              </a>
-            </p>
-          ) : null}
         </div>
       ) : null}
     </main>

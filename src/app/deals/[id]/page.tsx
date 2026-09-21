@@ -5,9 +5,11 @@ import { ActivityGraphic } from "@/components/activity-graphic";
 import { BookForm } from "@/components/book-form";
 import { DealTicket, toDealTicket } from "@/components/deal-ticket";
 import { isTicketCategory, leftoverDescription, resourceLabel } from "@/lib/constants";
+import { isSupabaseConfigured } from "@/lib/env";
 import { formatEuro, discountPercent } from "@/lib/money";
 import { getDealById, isDealBookable } from "@/lib/queries";
 import { formatDateTime } from "@/lib/time";
+import { SetupNeeded } from "@/components/setup-needed";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isSupabaseConfigured()) return { title: "Deal" };
   const deal = await getDealById(id);
   if (!deal) return { title: "Deal" };
   return { title: `${deal.venue.name} · ${deal.court.name}` };
@@ -31,6 +34,7 @@ export default async function DealPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  if (!isSupabaseConfigured()) return <SetupNeeded />;
   const deal = await getDealById(id);
   if (!deal) notFound();
 

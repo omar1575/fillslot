@@ -3,7 +3,9 @@ import { CategoryCollage } from "@/components/activity-graphic";
 import { CategoryFilters } from "@/components/category-filters";
 import { DealTicket, EmptyDeals, toDealTicket } from "@/components/deal-ticket";
 import { parseCategory } from "@/lib/constants";
+import { isSupabaseConfigured } from "@/lib/env";
 import { getOpenDeals } from "@/lib/queries";
+import { SetupNeeded } from "@/components/setup-needed";
 
 export default async function HomePage({
   searchParams,
@@ -12,6 +14,7 @@ export default async function HomePage({
 }) {
   const query = await searchParams;
   const category = parseCategory(query.category);
+  if (!isSupabaseConfigured()) return <SetupNeeded />;
   const deals = await getOpenDeals(undefined, category);
   const featured = deals.slice(0, 3);
 

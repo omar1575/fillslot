@@ -1,7 +1,9 @@
 import { CategoryFilters } from "@/components/category-filters";
 import { DealTicket, EmptyDeals, toDealTicket } from "@/components/deal-ticket";
 import { parseCategory } from "@/lib/constants";
+import { isSupabaseConfigured } from "@/lib/env";
 import { getOpenDeals } from "@/lib/queries";
+import { SetupNeeded } from "@/components/setup-needed";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export default async function DealsPage({
 }) {
   const query = await searchParams;
   const category = parseCategory(query.category);
+  if (!isSupabaseConfigured()) return <SetupNeeded />;
   const deals = await getOpenDeals(undefined, category);
 
   return (
