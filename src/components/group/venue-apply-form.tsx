@@ -9,7 +9,7 @@ import { ACTIVITY_CATEGORIES, CATEGORY_LABELS, DEFAULT_CITY } from "@/lib/consta
 import type { ActivityCategory } from "@/db/schema";
 import { newId } from "@/lib/group-plan";
 
-export function VenueApplyForm({ nextHref = "/partner/desk" }: { nextHref?: string }) {
+export function VenueApplyForm({ nextHref = "/club" }: { nextHref?: string }) {
   const { ready, venue, saveVenue } = useGroupPlan();
   const [error, setError] = useState<string | null>(null);
 

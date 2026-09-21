@@ -8,7 +8,7 @@ import { occupancyLine, PlanTicket } from "@/components/group/plan-ticket";
 import { useGroupPlan } from "@/components/group/use-group-plan";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { formatEuro } from "@/lib/money";
-import { formatDateTime, formatTimeRange } from "@/lib/time";
+import { formatDateTime } from "@/lib/time";
 import type { PlanView, RescueChoice } from "@/lib/group-plan";
 
 function choiceLabel(choice: RescueChoice) {
@@ -110,7 +110,7 @@ export function PlanExperience({ planId, invited = false }: { planId: string; in
         </div>
       </div>
 
-      <aside className="night h-fit p-5 sm:p-6 lg:sticky lg:top-20">
+      <aside className="h-fit bg-[var(--ticket)] p-5 shadow-ticket sm:p-6 lg:sticky lg:top-20">
         {plan.phase === "open" || plan.phase === "holding" ? (
           <HoldPanel
             plan={plan}
@@ -150,6 +150,7 @@ export function PlanExperience({ planId, invited = false }: { planId: string; in
                 return;
               }
               store.confirm(planId);
+              router.push(`/chat/${planId}`);
             }}
           />
         ) : null}
@@ -195,9 +196,14 @@ function HoldPanel({
           The group is still short — choose now
         </button>
       ) : plan.youHolding ? (
-        <p className="mt-6 bg-[var(--ticket)] px-3 py-2 text-sm text-[var(--ink)]">
-          Min reached. Charging the group and opening chat.
-        </p>
+        <>
+          <p className="mt-6 bg-[var(--ticket)] px-3 py-2 text-sm text-[var(--ink)]">
+            Min reached. Charging the group and opening chat.
+          </p>
+          <Link href={`/chat/${plan.id}`} className="btn-ball mt-4 h-12 w-full">
+            Open group chat
+          </Link>
+        </>
       ) : (
         <button type="button" className="btn-ball mt-6 h-12 w-full" onClick={onHold}>
           Hold my spot · {formatEuro(plan.dealPriceCents)}
@@ -349,12 +355,13 @@ function ResultPanel({
       ) : null}
       {plan.phase === "released" || plan.phase === "expired" ? (
         <p className="mt-4 text-sm text-[var(--ink)]/80">
-          Your hold is released. You were not charged.
+          {switchedPlan
+            ? "The original plan let people go. Your hold moved with you."
+            : "Your hold is released. You were not charged."}
         </p>
       ) : null}
       {switchedPlan ? (
         <div className="mt-5">
-          <p className="mb-3 text-sm">Your hold moved with you.</p>
           <PlanTicket plan={switchedPlan} href={`/plans/${switchedPlan.id}`} compact />
         </div>
       ) : null}
@@ -376,32 +383,16 @@ function ResultPanel({
 }
 
 function ChatPanel({ plan }: { plan: PlanView }) {
-  const messages = [
-    {
-      from: "Fillslot",
-      text: `Group filled. Holds charged together at ${formatEuro(plan.dealPriceCents)} each. ${plan.venueName} has a firm booking.`,
-    },
-    { from: "Maya", text: "On my way from Wyck — see you at the desk." },
-    { from: "Lars", text: `Still ${formatTimeRange(plan.startsAtDate, plan.endsAtDate)}?` },
-  ];
   return (
     <div>
       <p className="font-mono text-[11px] tracking-[0.2em] text-[var(--ink)]/70 uppercase">Confirmed</p>
       <h2 className="mt-2 font-display text-3xl">The group is on</h2>
       <p className="mt-3 text-sm text-[var(--ink)]/80">
-        {plan.held} people · {formatEuro(plan.dealPriceCents * plan.held)} paid · venue notified 90 minutes
-        ahead.
+        {plan.held} people signed up for this window. Chat is only this activity and this time.
       </p>
-      <div className="mt-5 space-y-3">
-        {messages.map((message) => (
-          <div key={message.text} className="bg-[var(--ticket)] px-3 py-2 text-sm text-[var(--ink)]">
-            <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-[var(--ink)]/50">
-              {message.from}
-            </p>
-            <p className="mt-1">{message.text}</p>
-          </div>
-        ))}
-      </div>
+      <Link href={`/chat/${plan.id}`} className="btn-ball mt-6 h-12 w-full">
+        Open group chat
+      </Link>
     </div>
   );
 }

@@ -1,15 +1,21 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { CategoryCollage } from "@/components/activity-graphic";
 import { CategoryFilters } from "@/components/category-filters";
 import { DealTicket, EmptyDeals, toDealTicket } from "@/components/deal-ticket";
 import { parseCategory } from "@/lib/constants";
 import { getOpenDeals } from "@/lib/queries";
+import { isVendorRole } from "@/lib/audience";
 
 export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const session = await auth();
+  if (isVendorRole(session?.user?.role)) redirect("/club");
+
   const query = await searchParams;
   const category = parseCategory(query.category);
   const deals = await getOpenDeals(undefined, category);
@@ -32,14 +38,17 @@ export default async function HomePage({
               tickets onto Fillslot. You pay before you go. They take a smaller fee than an empty hour.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/plans" className="btn-ball">
-                Join a plan
-              </Link>
+              {session ? (
+                <Link href="/plans" className="btn-ball">
+                  Join a plan
+                </Link>
+              ) : (
+                <Link href="/login" className="btn-ball">
+                  Sign in
+                </Link>
+              )}
               <Link href="/deals" className="btn-ghost">
                 See leftovers
-              </Link>
-              <Link href="/partner" className="btn-ghost">
-                List a venue
               </Link>
             </div>
           </div>

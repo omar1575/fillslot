@@ -42,7 +42,7 @@ export default async function ClubPage({
           discounted prices plus min and full capacity.
         </p>
         <div className="mt-8">
-          <VenueApplyForm nextHref="/partner/desk" />
+          <VenueApplyForm nextHref="/club" />
         </div>
       </main>
     );
@@ -61,7 +61,7 @@ export default async function ClubPage({
 
   return (
     <main className="page">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div id="locations" className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--ink)]/50">
             {CATEGORY_LABELS[venue.category]} desk
@@ -108,8 +108,8 @@ export default async function ClubPage({
         )}
       </section>
 
-      <section className="mt-10">
-        <h2 className="font-display text-3xl">Slots</h2>
+      <section id="availabilities" className="mt-10">
+        <h2 className="font-display text-3xl">Availabilities</h2>
         {dashboard.slots.length === 0 ? (
           <div className="mt-4">
             <EmptyDeals

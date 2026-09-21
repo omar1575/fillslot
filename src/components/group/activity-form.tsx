@@ -22,7 +22,7 @@ function defaultWindow() {
 
 export function ActivityForm() {
   const { venue, saveActivity, ready } = useGroupPlan();
-  const window = useMemo(defaultWindow, []);
+  const slotWindow = useMemo(defaultWindow, []);
   const [evenOnly, setEvenOnly] = useState(true);
   const [flexible, setFlexible] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,14 +99,14 @@ export function ActivityForm() {
           flexible,
           listedByYou: true,
         });
-        window.location.assign(`/plans/${id}`);
+        window.location.assign("/club");
       }}
     >
       {error ? <p className="notice-error">{error}</p> : null}
       {!venue ? (
         <p className="notice-warn !bg-[var(--glass)] !text-[var(--ink)]">
           No venue on this device yet. We will list this under “Your venue” until you{" "}
-          <Link className="underline" href="/partner">
+          <Link className="underline" href="/club">
             create the venue
           </Link>
           .
@@ -152,11 +152,11 @@ export function ActivityForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="startsAt">Starts (Amsterdam)</Label>
-          <Input id="startsAt" name="startsAt" type="datetime-local" required defaultValue={window.start} />
+          <Input id="startsAt" name="startsAt" type="datetime-local" required defaultValue={slotWindow.start} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="endsAt">Ends</Label>
-          <Input id="endsAt" name="endsAt" type="datetime-local" required defaultValue={window.end} />
+          <Input id="endsAt" name="endsAt" type="datetime-local" required defaultValue={slotWindow.end} />
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

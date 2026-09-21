@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ActivityForm } from "@/components/group/activity-form";
+import { requireVendor } from "@/lib/audience";
 
 export const metadata = { title: "New activity" };
 
-export default function NewActivityPage() {
+export default async function NewActivityPage() {
+  await requireVendor("/club/activity");
   return (
     <main className="page max-w-lg">
       <p className="kicker text-[var(--ink)]/50">Venue listing</p>
@@ -13,8 +15,8 @@ export default function NewActivityPage() {
         and flexible rules.
       </p>
       <p className="mt-3 text-sm">
-        <Link href="/partner/desk" className="underline">
-          Back to desk
+        <Link href="/club" className="underline">
+          Back to locations
         </Link>
       </p>
       <div className="mt-8">

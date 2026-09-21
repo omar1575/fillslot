@@ -10,6 +10,7 @@ import type { PlanView } from "@/lib/group-plan";
 export function occupancyLine(plan: PlanView) {
   if (plan.phase === "confirmed") return `${plan.held} going · group filled`;
   if (plan.phase === "released" || plan.phase === "expired") return "Hold released";
+  if (plan.held === 0) return `Open · needs ${plan.minCapacity}`;
   if (plan.spotsNeeded > 0) {
     return `${plan.held} holding · ${plan.spotsNeeded} short of ${plan.minCapacity}`;
   }

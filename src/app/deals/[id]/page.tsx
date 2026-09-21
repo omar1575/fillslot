@@ -8,6 +8,7 @@ import { isTicketCategory, leftoverDescription, resourceLabel } from "@/lib/cons
 import { formatEuro, discountPercent } from "@/lib/money";
 import { getDealById, isDealBookable } from "@/lib/queries";
 import { formatDateTime } from "@/lib/time";
+import { bounceVendorToDesk } from "@/lib/audience";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,7 @@ export default async function DealPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  await bounceVendorToDesk();
   const deal = await getDealById(id);
   if (!deal) notFound();
 

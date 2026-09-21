@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { PlanTicket } from "@/components/group/plan-ticket";
 import { useGroupPlan } from "@/components/group/use-group-plan";
 
@@ -29,9 +28,6 @@ export function PlansBoard() {
         ))}
       </div>
       <div className="mt-10 flex flex-wrap gap-4 text-sm">
-        <Link href="/partner" className="underline">
-          List your venue
-        </Link>
         <button type="button" onClick={reset} className="text-[var(--ink)]/45 underline">
           Reset demo on this device
         </button>

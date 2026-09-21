@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import Stripe from "stripe";
-import { auth } from "@/auth";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { fulfillCheckoutSession } from "@/lib/booking";
 import { getBookingByCheckoutSession } from "@/lib/queries";
 import { getStripe } from "@/lib/stripe";
+import { requirePlayer } from "@/lib/audience";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +15,7 @@ export default async function BookingSuccessPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login?callbackUrl=/bookings");
+  const session = await requirePlayer("/bookings");
   const query = await searchParams;
   const sessionId = typeof query.session_id === "string" ? query.session_id : "";
   if (!sessionId) redirect("/bookings");

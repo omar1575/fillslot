@@ -8,9 +8,7 @@ import { formatDate, formatTimeRange } from "@/lib/time";
 
 export function ClubGroupSection({ venueName }: { venueName: string }) {
   const { ready, plans } = useGroupPlan();
-  const rows = ready
-    ? plans.filter((plan) => plan.listedByYou || plan.venueName === venueName)
-    : [];
+  const rows = ready ? plans.filter((plan) => plan.venueName === venueName) : [];
 
   return (
     <section className="mt-12">
@@ -48,9 +46,7 @@ export function ClubGroupSection({ venueName }: { venueName: string }) {
                     {formatDate(plan.startsAtDate)} · {formatTimeRange(plan.startsAtDate, plan.endsAtDate)}
                   </td>
                   <td>
-                    <Link href={`/plans/${plan.id}`} className="underline">
-                      {plan.title}
-                    </Link>
+                    {plan.title}
                     <span className="block text-xs text-[var(--ink)]/50">
                       {formatEuro(plan.dealPriceCents)} each
                     </span>

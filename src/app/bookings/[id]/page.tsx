@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { PeopleCount } from "@/components/people-count";
 import { formatEuro } from "@/lib/money";
 import { getBookingWithDetails } from "@/lib/queries";
 import { formatDateTime, formatTimeRange } from "@/lib/time";
 import { resourceLabel } from "@/lib/constants";
+import { requirePlayer } from "@/lib/audience";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +16,7 @@ export default async function BookingPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login?callbackUrl=/bookings");
+  const session = await requirePlayer("/bookings");
   const { id } = await params;
   const row = await getBookingWithDetails(id);
   if (!row) notFound();
@@ -61,6 +60,11 @@ export default async function BookingPage({
         <p className="mt-2 text-sm text-[var(--ink)]/60">
           {row.venue.address}, {row.venue.postalCode} {row.venue.city}
         </p>
+        {row.booking.status === "paid" || row.booking.status === "completed" ? (
+          <Link href={`/chat/${row.slot.id}`} className="btn-ink mt-6">
+            Open group chat
+          </Link>
+        ) : null}
         </div>
       </div>
     </main>

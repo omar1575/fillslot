@@ -2,6 +2,7 @@ import { CategoryFilters } from "@/components/category-filters";
 import { DealTicket, EmptyDeals, toDealTicket } from "@/components/deal-ticket";
 import { parseCategory } from "@/lib/constants";
 import { getOpenDeals } from "@/lib/queries";
+import { bounceVendorToDesk } from "@/lib/audience";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function DealsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await bounceVendorToDesk();
   const query = await searchParams;
   const category = parseCategory(query.category);
   const deals = await getOpenDeals(undefined, category);

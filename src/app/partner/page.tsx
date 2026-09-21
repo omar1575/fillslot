@@ -1,7 +1,9 @@
-import { PartnerLanding } from "@/components/group/partner-landing";
+import { redirect } from "next/navigation";
+import { requireVendor } from "@/lib/audience";
 
 export const metadata = { title: "Partner" };
 
-export default function PartnerPage() {
-  return <PartnerLanding />;
+export default async function PartnerPage() {
+  await requireVendor("/club");
+  redirect("/club");
 }

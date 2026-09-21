@@ -1,7 +1,9 @@
-import { PartnerDesk } from "@/components/group/partner-desk";
+import { redirect } from "next/navigation";
+import { requireVendor } from "@/lib/audience";
 
 export const metadata = { title: "Venue desk" };
 
-export default function PartnerDeskPage() {
-  return <PartnerDesk />;
+export default async function PartnerDeskPage() {
+  await requireVendor("/club");
+  redirect("/club");
 }

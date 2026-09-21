@@ -1,18 +1,16 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { EmptyDeals } from "@/components/deal-ticket";
 import { PeopleCount } from "@/components/people-count";
 import { formatEuro } from "@/lib/money";
 import { getUserBookings } from "@/lib/queries";
 import { formatDate, formatTimeRange } from "@/lib/time";
 import { resourceLabel } from "@/lib/constants";
+import { requirePlayer } from "@/lib/audience";
 
 export const metadata = { title: "Bookings" };
 
 export default async function BookingsPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login?callbackUrl=/bookings");
+  const session = await requirePlayer("/bookings");
 
   const rows = await getUserBookings(session.user.id);
 
