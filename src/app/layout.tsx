@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Figtree, IBM_Plex_Mono, Syne } from "next/font/google";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
@@ -31,13 +32,13 @@ export const metadata: Metadata = {
     "Clubs list empty padel hours at a discount. You pay in the app. They keep the court from going stale.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
       className={`${syne.variable} ${figtree.variable} ${ibm.variable} h-full`}
     >
-      <body className="flex min-h-full flex-col bg-[var(--wall)] text-[var(--ink)]">
+      <body className="flex min-h-full flex-col text-[var(--ink)]">
         <SiteHeader />
         {children}
         <SiteFooter />

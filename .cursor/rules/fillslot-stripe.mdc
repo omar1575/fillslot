@@ -1,0 +1,28 @@
+---
+description: Stripe test Checkout, Connect, webhooks, and the no-keys demo path
+globs: src/lib/{stripe,connect,booking,env}.ts,src/app/api/stripe/**/*.ts,src/app/actions/{book,connect}.ts,src/app/bookings/success/page.tsx,.env.example
+alwaysApply: false
+---
+
+# Payments logic (do not delete the no-Stripe path)
+
+`isStripeConfigured()` = `STRIPE_SECRET_KEY` present. If missing, `startCheckout` holds then `fulfillPaidSlot` immediately and returns `/bookings/{id}`. Omar demos this; keep it.
+
+## Checkout (keys present)
+
+1. Reject unknown / unapproved venue / existing other booking (“Someone else just took this slot.”). Same user already paid → `/bookings/{id}`.
+2. `holdSlot` (open, or held with expired hold, and `startsAt` in the future). Fail → taken copy.
+3. Stripe Checkout `mode: payment`, `payment_method_types: ["ideal","card"]`, EUR, `unit_amount: dealPriceCents`.
+4. `expires_at` ≥ 31 minutes (Stripe rejects < 30m; do not use exactly 30m).
+5. Metadata `slotId` + `userId`. Success `/bookings/success?session_id={CHECKOUT_SESSION_ID}`. Cancel `/deals/{id}?cancelled=1`.
+6. Destination charge **only** when `stripeAccountId` **and** `stripeDetailsSubmitted`: `application_fee_amount = commissionFromGross(...)`, `transfer_data.destination`. Otherwise platform collects 100%.
+7. `payoutPending = 1` unless Connect is fully ready (account + details submitted). Never key off account id alone.
+8. Persist `stripeCheckoutSessionId` on the slot. No `session.url` → `releaseHold` and error.
+
+## After pay
+
+- Webhook verify `STRIPE_WEBHOOK_SECRET`. `checkout.session.completed` with `payment_status === "paid"` **and** `checkout.session.async_payment_succeeded` → `fulfillCheckoutSession` (idempotent). `expired` / `async_payment_failed` → `releaseHold(slotId, session.id)`. `account.updated` → `stripeDetailsSubmitted`.
+- Success page: auth; if booking exists redirect; if session paid, fulfill then redirect to check-in; if unpaid (iDEAL pending) show a processing state, do not dump to `/bookings`.
+- Club refunds: refund PI when `pi_…`. Set `refund_application_fee: true` only if a Connect application fee was taken.
+
+Connect Express from `/club`: NL account, `card_payments` + `transfers`, onboarding link, sync on `?connect=return`. Until ready, dashboard copy is “payout pending”. Document Stripe env vars in `.env.example` only.

@@ -8,44 +8,43 @@ export async function SiteHeader() {
   const role = session?.user?.role;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--ink)]/10 bg-[var(--wall)]/90 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="font-display text-2xl tracking-tight">{APP_NAME}</span>
-          <span className="hidden font-mono text-[10px] tracking-[0.18em] text-[var(--ink)]/50 uppercase sm:inline">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--ink)] text-[var(--ticket)]">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
+        <Link href="/" className="flex min-w-0 items-baseline gap-2">
+          <span className="font-display text-xl tracking-tight text-[var(--ball)] sm:text-2xl">
+            {APP_NAME}
+          </span>
+          <span className="hidden font-mono text-[10px] tracking-[0.18em] text-white/45 uppercase sm:inline">
             Maastricht
           </span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/deals" className="hover:text-[var(--turf)]">
+        <nav className="flex max-w-[62%] items-center gap-3 overflow-x-auto text-sm whitespace-nowrap sm:max-w-none sm:gap-5">
+          <Link href="/deals" className="hover:text-[var(--ball)]">
             Deals
           </Link>
           {session ? (
             <>
-              <Link href="/bookings" className="hover:text-[var(--turf)]">
+              <Link href="/bookings" className="hover:text-[var(--ball)]">
                 Bookings
               </Link>
               {role === "club" || role === "admin" ? (
-                <Link href="/club" className="hover:text-[var(--turf)]">
+                <Link href="/club" className="hover:text-[var(--ball)]">
                   Club
                 </Link>
               ) : null}
               {role === "admin" ? (
-                <Link href="/admin/venues" className="hover:text-[var(--turf)]">
+                <Link href="/admin/venues" className="hover:text-[var(--ball)]">
                   Admin
                 </Link>
               ) : null}
               <form action={signOutAction}>
-                <button type="submit" className="font-medium hover:text-[var(--turf)]">
+                <button type="submit" className="font-medium hover:text-[var(--ball)]">
                   Sign out
                 </button>
               </form>
             </>
           ) : (
-            <Link
-              href="/login"
-              className="bg-[var(--ink)] px-3 py-1.5 font-medium text-[var(--ball)]"
-            >
+            <Link href="/login" className="!rounded-none bg-[var(--ball)] px-3 py-1.5 font-display text-[var(--ink)]">
               Sign in
             </Link>
           )}
@@ -57,12 +56,20 @@ export async function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-[var(--ink)]/10">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-[var(--ink)]/60 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p>Leftover hours, paid in advance. Netherlands-first.</p>
+    <footer className="mt-auto border-t border-white/10 bg-[var(--ink)] text-white/60">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p>
+          <span className="font-display text-[var(--ball)]">Fillslot</span>
+          {" · "}
+          Leftover hours, paid in advance. Netherlands-first.
+        </p>
         <div className="flex gap-4">
-          <Link href="/terms">Terms</Link>
-          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms" className="hover:text-[var(--ball)]">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-[var(--ball)]">
+            Privacy
+          </Link>
         </div>
       </div>
     </footer>

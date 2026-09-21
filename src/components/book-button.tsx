@@ -6,11 +6,7 @@ import { bookSlotAction } from "@/app/actions/book";
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="h-12 w-full bg-[var(--ball)] font-display text-lg text-[var(--ink)] shadow-[4px_4px_0_var(--ink)] hover:brightness-95 disabled:opacity-50"
-    >
+    <button type="submit" disabled={pending} className="btn-ball h-12 w-full text-lg disabled:opacity-50">
       {pending ? "Holding the court…" : label}
     </button>
   );
@@ -27,11 +23,7 @@ export function BookButton({
 }) {
   if (disabled) {
     return (
-      <button
-        type="button"
-        disabled
-        className="h-12 w-full bg-white/20 font-display text-lg text-white/70"
-      >
+      <button type="button" disabled className="h-12 w-full bg-white/15 font-display text-lg text-white/70">
         {label}
       </button>
     );

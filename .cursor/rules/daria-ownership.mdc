@@ -1,0 +1,30 @@
+---
+description: Daria vs Omar ownership, git branch, demo logins, product facts
+alwaysApply: true
+---
+
+# Daria owns UI + payments. Omar owns the rest.
+
+Branch: `daria/ui-payments` (or `daria/*`). Never commit to `main`. Never commit `.env.local`. Never `git push --force` to `main`.
+
+Before a session: `git checkout daria/ui-payments; git fetch origin; git rebase origin/main`. Push often: `git push -u origin HEAD`.
+
+Demo logins on `/login` (local only): `player@fillslot.test`, `club@plazapadel.test`, `admin@fillslot.test`.
+
+## Daria files (edit freely)
+
+UI: `src/app/globals.css`, `src/app/layout.tsx`, `src/app/**/page.tsx`, `src/app/not-found.tsx`, `src/app/error.tsx`, `src/components/**`.
+Payments: `src/lib/stripe.ts`, `src/lib/connect.ts`, `src/lib/booking.ts`, `src/app/api/stripe/webhook/route.ts`, `src/app/actions/book.ts`, `src/app/actions/connect.ts`, `src/app/bookings/success/page.tsx`.
+Env docs only: `.env.example` (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`).
+
+Hot files (`globals.css`, `layout.tsx`, `package.json`): restyle is allowed; push that commit first and tell Omar.
+
+## Omar files (do not rewrite)
+
+`src/db/schema.ts`, `src/db/seed.ts`, `src/db/index.ts`, `src/db/seed-cli.ts`, `src/auth.ts`, `src/app/actions/auth.ts`, `src/app/api/auth/**`, `src/lib/queries.ts`, `src/lib/mail.ts`, `src/app/actions/slots.ts`, `src/app/actions/venues.ts`. Club/admin booking rules stay; visual layout on those pages is OK.
+
+If you must touch an Omar file: smallest possible lines, then tell Omar in the chat.
+
+## Product facts (do not invent features)
+
+Leftover padel time, Maastricht first. English UI, euros. One listing = one court + one window. Pay before play. Non-refundable unless the club cancels. 15% commission (`commissionBps` 1500). No new verticals, Playtomic, maps, i18n, native apps, or memberships. No new npm package unless necessary; if you add one, push immediately and message Omar.
