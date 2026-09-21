@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { EmptyDeals } from "@/components/deal-ticket";
+import { PeopleCount } from "@/components/people-count";
 import { formatEuro } from "@/lib/money";
 import { getUserBookings } from "@/lib/queries";
 import { formatDate, formatTimeRange } from "@/lib/time";
@@ -32,7 +33,7 @@ export default async function BookingsPage() {
             }
           />
         ) : (
-          rows.map(({ booking, slot, court, venue }) => (
+          rows.map(({ booking, slot, court, venue, signedIn }) => (
             <Link
               key={booking.id}
               href={`/bookings/${booking.id}`}
@@ -47,6 +48,11 @@ export default async function BookingsPage() {
                     ? ` · ${booking.quantity} ${resourceLabel(venue.category, booking.quantity)}`
                     : ""}
                 </p>
+                <PeopleCount
+                  signedIn={signedIn}
+                  max={slot.capacity}
+                  className="mt-2 text-[var(--ink)]/55"
+                />
               </div>
               <div className="text-right">
                 <p className="font-mono text-lg tracking-[0.2em]">{booking.code}</p>

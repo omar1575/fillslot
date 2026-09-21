@@ -126,12 +126,12 @@ export default async function DealPage({
           Pay before you go
         </p>
         <h2 className="mt-2 font-display text-2xl sm:text-3xl">{formatDateTime(deal.slot.startsAt)}</h2>
-        <p className="mt-4 text-sm text-white/70">
+        <p className="mt-4 text-sm text-[var(--cream)]/70">
           {deal.court.name} · −{off}% vs the usual {formatEuro(deal.slot.originalPriceCents)}
           {ticketed ? ` per ${resourceLabel(deal.venue.category)}` : ""}
         </p>
         <p className="mt-2 font-display text-4xl">{formatEuro(deal.slot.dealPriceCents)}</p>
-        <p className="mt-2 text-sm text-white/55">
+        <p className="mt-2 text-sm text-[var(--cream)]/60">
           Fillslot keeps 15% as commission. {leftoverDescription(deal.venue.category)} unless the
           venue cancels.
         </p>

@@ -63,19 +63,19 @@ export function DealTicket({
           : "grid-cols-[92px_1fr] sm:grid-cols-[112px_1fr] md:grid-cols-[128px_1fr]",
       )}
     >
-      <div className="relative flex flex-col justify-between bg-[var(--turf)] py-3 pr-3 pl-2.5 text-[var(--ball)] sm:px-4 sm:py-4 sm:pr-5">
-        <p className="font-mono text-[9px] tracking-[0.22em] text-white/70 uppercase sm:text-[10px]">
+      <div className="relative flex flex-col justify-between bg-[var(--turf)] py-3 pr-3 pl-2.5 text-[var(--cream)] sm:px-4 sm:py-4 sm:pr-5">
+        <p className="font-mono text-[9px] tracking-[0.22em] text-[var(--cream)]/70 uppercase sm:text-[10px]">
           {CATEGORY_LABELS[deal.category]}
         </p>
         <p className="font-display text-xl leading-none sm:text-3xl md:text-4xl">
           {formatTime(deal.startsAt)}
         </p>
-        <p className="font-mono text-[10px] leading-tight whitespace-nowrap text-white/80 sm:text-[11px]">
+        <p className="font-mono text-[10px] leading-tight whitespace-nowrap text-[var(--cream)]/80 sm:text-[11px]">
           {formatDate(deal.startsAt)}
         </p>
         <span className="pointer-events-none absolute top-3 -right-2 size-3.5 rounded-full bg-[var(--wall)] sm:size-4" />
         <span className="pointer-events-none absolute bottom-3 -right-2 size-3.5 rounded-full bg-[var(--wall)] sm:size-4" />
-        <span className="pointer-events-none absolute inset-y-3 right-0 w-px border-r border-dashed border-white/35" />
+        <span className="pointer-events-none absolute inset-y-3 right-0 w-px border-r border-dashed border-[var(--cream)]/35" />
       </div>
       <div className="relative flex flex-col gap-3 px-4 py-4 md:px-5">
         <div className="flex items-start justify-between gap-3">

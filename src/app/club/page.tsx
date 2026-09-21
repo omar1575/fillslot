@@ -6,14 +6,16 @@ import { cancelSlotAction, refundBookingAction } from "@/app/actions/slots";
 import { EmptyDeals } from "@/components/deal-ticket";
 import { formatEuro } from "@/lib/money";
 import { getClubDashboard, getVenueForOwner } from "@/lib/queries";
-import { isStripeConfigured } from "@/lib/env";
-import { isConnectReady, syncConnectAccount } from "@/lib/connect";
-import { formatDate, formatTimeRange } from "@/lib/time";
 import {
   CATEGORY_LABELS,
   isTicketCategory,
   resourceLabel,
 } from "@/lib/constants";
+import { isStripeConfigured } from "@/lib/env";
+import { isConnectReady, syncConnectAccount } from "@/lib/connect";
+import { formatDate, formatTimeRange } from "@/lib/time";
+import { ClubGroupSection } from "@/components/group/club-group-section";
+import { VenueApplyForm } from "@/components/group/venue-apply-form";
 
 export const metadata = { title: "Club" };
 
@@ -32,12 +34,16 @@ export default async function ClubPage({
   const venue = await getVenueForOwner(session.user.id);
   if (!venue) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-16">
-        <h1 className="font-display text-4xl">No venue attached</h1>
+      <main className="page max-w-lg">
+        <p className="kicker text-[var(--ink)]/50">Partner</p>
+        <h1 className="mt-2 font-display text-5xl">Create your venue</h1>
         <p className="mt-3 text-[var(--ink)]/70">
-          This account is a partner role without a venue. Seed the demo catalog or ask an admin to
-          attach one.
+          Add name, activity, and location. You can list leftover hours after that, with usual and
+          discounted prices plus min and full capacity.
         </p>
+        <div className="mt-8">
+          <VenueApplyForm nextHref="/partner/desk" />
+        </div>
       </main>
     );
   }
@@ -65,9 +71,14 @@ export default async function ClubPage({
             Commission {venue.commissionBps / 100}% · {venue.city}
           </p>
         </div>
-        <Link href="/club/slots/new" className="btn-ball w-fit">
-          List a leftover {ticketed ? resourceLabel(venue.category, 2) : "hour"}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/club/slots/new" className="btn-ball w-fit">
+            List a leftover {ticketed ? resourceLabel(venue.category, 2) : "hour"}
+          </Link>
+          <Link href="/partner/activity" className="btn-ghost w-fit">
+            Add group activity
+          </Link>
+        </div>
       </div>
 
       {error ? <p className="notice-error mt-6">{error}</p> : null}
@@ -119,14 +130,16 @@ export default async function ClubPage({
                   <th className="py-2">When</th>
                   <th className="capitalize">{unit}</th>
                   <th>Price</th>
-                  <th>{ticketed ? "Inventory" : "Status"}</th>
+                  <th>People</th>
                   <th>Guests</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {dashboard.slots.map(({ slot, court, bookings, remaining, sold }) => {
-                  const paid = bookings.filter((row) => row.booking.status === "paid");
+                  const paid = bookings.filter(
+                    (row) => row.booking.status === "paid" || row.booking.status === "completed",
+                  );
                   const expired = slot.startsAt < now && slot.status === "open";
                   return (
                     <tr key={slot.id} className="border-t border-[var(--ink)]/10 align-top">
@@ -142,11 +155,16 @@ export default async function ClubPage({
                         {ticketed ? " each" : ""}
                       </td>
                       <td>
-                        {ticketed
-                          ? `${sold} sold · ${remaining} left${expired ? " · expired" : slot.status === "cancelled" ? " · closed" : ""}`
-                          : expired
-                            ? "expired"
-                            : slot.status}
+                        <span className="font-mono text-xs tracking-wide uppercase">
+                          {sold} signed in · max {slot.capacity}
+                        </span>
+                        <span className="mt-1 block text-[var(--ink)]/55">
+                          {ticketed
+                            ? `${remaining} left${expired ? " · expired" : slot.status === "cancelled" ? " · closed" : ""}`
+                            : expired
+                              ? "expired"
+                              : slot.status}
+                        </span>
                       </td>
                       <td>
                         {paid.length === 0 ? (
@@ -185,6 +203,7 @@ export default async function ClubPage({
           </div>
         )}
       </section>
+      <ClubGroupSection venueName={venue.name} />
     </main>
   );
 }

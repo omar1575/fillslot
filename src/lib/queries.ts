@@ -68,6 +68,29 @@ async function attachRemaining(
   }));
 }
 
+function signedInQuantity(list: Booking[]) {
+  return list
+    .filter((booking) => booking.status === "paid" || booking.status === "completed")
+    .reduce((sum, booking) => sum + booking.quantity, 0);
+}
+
+async function occupancyBySlotId(slotIds: string[]) {
+  const counts = new Map<string, number>();
+  if (slotIds.length === 0) return counts;
+  const db = await getDb();
+  const rows = await db.select().from(bookings).where(inArray(bookings.slotId, slotIds));
+  const bySlot = new Map<string, Booking[]>();
+  for (const booking of rows) {
+    const list = bySlot.get(booking.slotId) ?? [];
+    list.push(booking);
+    bySlot.set(booking.slotId, list);
+  }
+  for (const [slotId, list] of bySlot) {
+    counts.set(slotId, signedInQuantity(list));
+  }
+  return counts;
+}
+
 export async function getOpenDeals(city = DEFAULT_CITY, category?: ActivityCategory | string) {
   const db = await getDb();
   const now = new Date();
@@ -134,7 +157,12 @@ export async function getBookingWithDetails(id: string) {
     .innerJoin(users, eq(bookings.userId, users.id))
     .where(eq(bookings.id, id))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+  const occupancy = await occupancyBySlotId([row.slot.id]);
+  return {
+    ...row,
+    signedIn: occupancy.get(row.slot.id) ?? 0,
+  };
 }
 
 export async function getBookingByCheckoutSession(sessionId: string) {
@@ -149,7 +177,7 @@ export async function getBookingByCheckoutSession(sessionId: string) {
 
 export async function getUserBookings(userId: string) {
   const db = await getDb();
-  return db
+  const rows = await db
     .select({
       booking: bookings,
       slot: slots,
@@ -162,6 +190,11 @@ export async function getUserBookings(userId: string) {
     .innerJoin(venues, eq(courts.venueId, venues.id))
     .where(and(eq(bookings.userId, userId), inArray(bookings.status, ["paid", "refunded", "completed"])))
     .orderBy(asc(slots.startsAt));
+  const occupancy = await occupancyBySlotId(rows.map((row) => row.slot.id));
+  return rows.map((row) => ({
+    ...row,
+    signedIn: occupancy.get(row.slot.id) ?? 0,
+  }));
 }
 
 export async function getVenueForOwner(userId: string) {
@@ -227,9 +260,7 @@ export async function getClubDashboard(venueId: string) {
           row.slot.capacity,
           slotBookings.map((item) => item.booking),
         ),
-        sold: slotBookings
-          .filter((item) => item.booking.status === "paid")
-          .reduce((sum, item) => sum + item.booking.quantity, 0),
+        sold: signedInQuantity(slotBookings.map((item) => item.booking)),
       };
     }),
   };

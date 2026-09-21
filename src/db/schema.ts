@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -178,9 +179,26 @@ export const bookings = pgTable(
   ],
 );
 
+export const groupMessages = pgTable(
+  "group_message",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    roomId: text("room_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (message) => [index("group_message_room_created_idx").on(message.roomId, message.createdAt)],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   venues: many(venues),
   bookings: many(bookings),
+  groupMessages: many(groupMessages),
 }));
 
 export const venuesRelations = relations(venues, ({ one, many }) => ({
@@ -203,10 +221,15 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   user: one(users, { fields: [bookings.userId], references: [users.id] }),
 }));
 
+export const groupMessagesRelations = relations(groupMessages, ({ one }) => ({
+  user: one(users, { fields: [groupMessages.userId], references: [users.id] }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type Venue = typeof venues.$inferSelect;
 export type Court = typeof courts.$inferSelect;
 export type Slot = typeof slots.$inferSelect;
 export type Booking = typeof bookings.$inferSelect;
+export type GroupMessage = typeof groupMessages.$inferSelect;
 export type UserRole = (typeof userRoleEnum.enumValues)[number];
 export type ActivityCategory = (typeof activityCategoryEnum.enumValues)[number];

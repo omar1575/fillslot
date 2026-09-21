@@ -23,20 +23,23 @@ export default async function HomePage({
             <p className="font-mono text-[11px] tracking-[0.28em] text-[var(--ball)] uppercase">
               Maastricht · leftover hours and tickets
             </p>
-            <h1 className="mt-4 max-w-xl font-display text-5xl leading-[0.92] text-white sm:text-7xl">
+            <h1 className="mt-4 max-w-xl font-display text-5xl leading-[0.92] text-[var(--cream)] sm:text-7xl">
               Empty slots.
               <span className="block text-[var(--ball)]">Cheaper hours.</span>
             </h1>
-            <p className="mt-6 max-w-lg text-lg text-white/75">
+            <p className="mt-6 max-w-lg text-lg text-[var(--cream)]/75">
               Venues dump leftover padel courts, chairs, rooms, lanes, cinema seats, and stadium
               tickets onto Fillslot. You pay before you go. They take a smaller fee than an empty hour.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/deals" className="btn-ball">
-                See today&apos;s leftovers
+              <Link href="/plans" className="btn-ball">
+                Join a plan
               </Link>
-              <Link href="/club" className="btn-ghost">
-                List empty hours
+              <Link href="/deals" className="btn-ghost">
+                See leftovers
+              </Link>
+              <Link href="/partner" className="btn-ghost">
+                List a venue
               </Link>
             </div>
           </div>

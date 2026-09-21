@@ -41,7 +41,7 @@ export default async function BookingSuccessPage({
         iDEAL / card
       </p>
       <div className="ticket mt-6 bg-[var(--ticket)] px-6 py-12 shadow-ticket">
-        <p className="font-mono text-[11px] tracking-[0.22em] text-[var(--turf)] uppercase">
+        <p className="font-mono text-[11px] tracking-[0.22em] text-[var(--ink)] uppercase">
           Payment received
         </p>
         <h1 className="mt-4 font-display text-4xl">Confirming your leftover…</h1>

@@ -69,7 +69,7 @@ export function CategoryFilters({
             "px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] uppercase",
             chip.current
               ? "bg-[var(--ink)] text-[var(--ball)]"
-              : "bg-white text-[var(--ink)] ring-1 ring-[var(--ink)]/15 hover:bg-[var(--ball)]",
+              : "bg-[var(--ticket)] text-[var(--ink)] ring-1 ring-[var(--ink)]/15 hover:bg-[var(--ball)]",
           )}
         >
           {chip.label}

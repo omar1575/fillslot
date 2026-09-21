@@ -20,6 +20,39 @@ const CHECKOUT_EXPIRE_BUFFER_SECONDS = 120;
 
 export class BookingError extends Error {}
 
+async function createCheckoutSession(
+  stripe: Stripe,
+  sessionParams: Stripe.Checkout.SessionCreateParams,
+) {
+  try {
+    return await stripe.checkout.sessions.create(sessionParams);
+  } catch (error) {
+    if (!isUnsupportedPaymentMethod(error)) throw error;
+    const { payment_method_types: _ignored, ...rest } = sessionParams;
+    return stripe.checkout.sessions.create({
+      ...rest,
+      payment_method_types: ["card"],
+    });
+  }
+}
+
+function isUnsupportedPaymentMethod(error: unknown) {
+  return (
+    error instanceof Stripe.errors.StripeInvalidRequestError &&
+    /payment_method_types|ideal/i.test(error.message)
+  );
+}
+
+function checkoutFailureMessage(error: unknown) {
+  if (error instanceof Stripe.errors.StripePermissionError) {
+    return "Stripe cannot start Checkout with this API key. Use the Secret key (sk_test_...) from the Stripe dashboard, or enable Checkout Sessions Write on the restricted key.";
+  }
+  if (error instanceof Stripe.errors.StripeAuthenticationError) {
+    return "Stripe rejected the API key. Check STRIPE_SECRET_KEY in .env.local.";
+  }
+  return "Could not start checkout.";
+}
+
 async function loadDeal(slotId: string) {
   const db = await getDb();
   const [row] = await db
@@ -387,11 +420,11 @@ export async function startCheckout(slotId: string, userId: string, quantity = 1
 
   let session: Stripe.Checkout.Session;
   try {
-    session = await stripe.checkout.sessions.create(sessionParams);
-  } catch {
+    session = await createCheckoutSession(stripe, sessionParams);
+  } catch (error) {
     if (pending) await cancelPendingBooking(pending.id);
     else await releaseHold(slotId);
-    throw new BookingError("Could not start checkout.");
+    throw new BookingError(checkoutFailureMessage(error));
   }
 
   if (pending) {

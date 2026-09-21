@@ -1,20 +1,28 @@
 ---
-description: Fillslot visual identity — indoor night court, TGTG tickets, mobile-first
+description: Fillslot visual identity — forest teal + brass tickets, Roboto, mobile-first
 globs: src/app/**/*.{tsx,css},src/components/**/*.tsx
 alwaysApply: false
 ---
 
 # Visual identity
 
-Indoor padel night. Not Inter / cream / terracotta / default shadcn.
+Warm leftover marketplace. Palette (do not drift back to navy / lime / pink / Inter):
 
-Tokens (keep names): `--ink #07131f`, `--turf #0c4a86`, `--court #1473c4`, `--ball #d4f34a`, `--wall` cool blue-gray, `--ticket` ice white. Fonts already in `layout.tsx`: **Syne** display, **Figtree** body, **IBM Plex Mono** stubs. Do not add Inter.
+- forest `#123F36` → `--ink`, header/footer, body type, shadows
+- teal `#2A6B5C` → `--turf` / `--court`, ticket stub, graphics
+- brass `#C49A45` → `--ball`, wordmark, CTAs, % off
+- sand `#E8DCC4` → `--wall` / `--cream`, page
+- ticket body `--ticket #F3EBE0` (sand mixed with white)
 
-Chrome: dark ink header + footer, lime wordmark/CTA. Mobile-first: no cramped wrap; deal book CTA sticky on small screens. Laptop: club table readable (`min-w` + horizontal scroll).
+Font is **Roboto** only (`layout.tsx`, weights 400/500/700/900). Headlines and buttons use 700–900. Kickers stay uppercase Roboto with wide tracking. Do not bring back Syne, Figtree, IBM Plex, or Inter.
 
-Tickets (TGTG): left time stub, dashed perforation, notched corners (`.ticket`), lime `−{n}%` sticker, struck original price, deal price in Syne, offset ink shadow. Restyle markup; do not change price/discount math (`formatEuro`, `discountPercent`).
+Chrome: dark forest header + footer, brass wordmark, brass Sign in with forest type. Hero `.night` is forest with a teal wash and brass glow; type is sand / brass (not dark ink on dark). Mobile-first: no cramped wrap; deal book CTA sticky on small screens. Laptop: club table readable (`min-w` + horizontal scroll).
 
-Forms: square (`rounded-none`), taller inputs (`h-11`), ink border, lime/turf focus. Buttons: lime fill + ink type, or ink fill + lime type. No pill radius.
+Tickets (TGTG): left time stub (teal, sand type), dashed perforation, notched corners (`.ticket`), brass `−{n}%` sticker, struck original price, deal price in Roboto 900, offset forest shadow. Restyle markup; do not change price/discount math (`formatEuro`, `discountPercent`).
+
+Forms: square (`rounded-none`), taller inputs (`h-11`), forest border, brass focus. Buttons: brass fill + forest type, or forest fill + brass type. Ghost on the dark hero is sand border. No pill radius.
+
+On teal/forest fills, type is `--cream` or `--ball`. On sand pages, type is `--ink`.
 
 States that must look designed, not blank: empty deals, expired slot (`startsAt` past), taken/held slot, checkout cancelled, booking error query, 404, `error.tsx`. Copy stays English and concrete (“Someone else just took this slot.”).
 

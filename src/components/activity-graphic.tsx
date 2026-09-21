@@ -13,7 +13,7 @@ function Frame({
 }) {
   return (
     <svg viewBox="0 0 640 420" className={className} role="img" aria-label={label}>
-      <rect width="640" height="420" fill="#07131F" />
+      <rect width="640" height="420" fill="#123F36" />
       {children}
     </svg>
   );
@@ -31,10 +31,10 @@ export function ActivityGraphic({
   if (category === "hair") {
     return (
       <Frame className={className} label="Hair chair">
-        <rect x="180" y="90" width="280" height="240" fill="#0C4A86" />
-        <rect x="230" y="140" width="180" height="120" fill="none" stroke="#D4F34A" strokeWidth="6" />
-        <circle cx="320" cy="130" r="28" fill="#D4F34A" />
-        <rect x="290" y="260" width="60" height="70" fill="#F7FBFF" />
+        <rect x="180" y="90" width="280" height="240" fill="#2A6B5C" />
+        <rect x="230" y="140" width="180" height="120" fill="none" stroke="#C49A45" strokeWidth="6" />
+        <circle cx="320" cy="130" r="28" fill="#C49A45" />
+        <rect x="290" y="260" width="60" height="70" fill="#E8DCC4" />
       </Frame>
     );
   }
@@ -42,10 +42,10 @@ export function ActivityGraphic({
   if (category === "spa") {
     return (
       <Frame className={className} label="Spa room">
-        <rect x="90" y="80" width="460" height="260" fill="#0C4A86" />
-        <ellipse cx="320" cy="210" rx="140" ry="70" fill="#1473C4" />
-        <circle cx="250" cy="150" r="12" fill="#D4F34A" />
-        <circle cx="390" cy="150" r="8" fill="#D4F34A" opacity="0.7" />
+        <rect x="90" y="80" width="460" height="260" fill="#2A6B5C" />
+        <ellipse cx="320" cy="210" rx="140" ry="70" fill="#123F36" />
+        <circle cx="250" cy="150" r="12" fill="#C49A45" />
+        <circle cx="390" cy="150" r="8" fill="#C49A45" opacity="0.7" />
       </Frame>
     );
   }
@@ -53,13 +53,13 @@ export function ActivityGraphic({
   if (category === "bowling") {
     return (
       <Frame className={className} label="Bowling lane">
-        <rect x="220" y="40" width="200" height="340" fill="#0C4A86" />
-        <line x1="250" y1="40" x2="250" y2="380" stroke="#F7FBFF" strokeWidth="3" />
-        <line x1="390" y1="40" x2="390" y2="380" stroke="#F7FBFF" strokeWidth="3" />
-        <circle cx="320" cy="300" r="22" fill="#D4F34A" />
-        <rect x="292" y="70" width="16" height="50" fill="#F7FBFF" />
-        <rect x="312" y="62" width="16" height="58" fill="#F7FBFF" />
-        <rect x="332" y="70" width="16" height="50" fill="#F7FBFF" />
+        <rect x="220" y="40" width="200" height="340" fill="#2A6B5C" />
+        <line x1="250" y1="40" x2="250" y2="380" stroke="#E8DCC4" strokeWidth="3" />
+        <line x1="390" y1="40" x2="390" y2="380" stroke="#E8DCC4" strokeWidth="3" />
+        <circle cx="320" cy="300" r="22" fill="#C49A45" />
+        <rect x="292" y="70" width="16" height="50" fill="#E8DCC4" />
+        <rect x="312" y="62" width="16" height="58" fill="#E8DCC4" />
+        <rect x="332" y="70" width="16" height="50" fill="#E8DCC4" />
       </Frame>
     );
   }
@@ -67,26 +67,26 @@ export function ActivityGraphic({
   if (category === "cinema") {
     return (
       <Frame className={className} label="Cinema screen">
-        <rect x="80" y="70" width="480" height="200" fill="#0C4A86" />
-        <rect x="110" y="90" width="420" height="150" fill="#1473C4" />
-        <rect x="140" y="300" width="50" height="30" fill="#D4F34A" />
-        <rect x="210" y="300" width="50" height="30" fill="#F7FBFF" opacity="0.4" />
-        <rect x="280" y="300" width="50" height="30" fill="#F7FBFF" opacity="0.4" />
-        <rect x="350" y="300" width="50" height="30" fill="#D4F34A" />
-        <rect x="420" y="300" width="50" height="30" fill="#F7FBFF" opacity="0.4" />
+        <rect x="80" y="70" width="480" height="200" fill="#2A6B5C" />
+        <rect x="110" y="90" width="420" height="150" fill="#123F36" />
+        <rect x="140" y="300" width="50" height="30" fill="#C49A45" />
+        <rect x="210" y="300" width="50" height="30" fill="#E8DCC4" opacity="0.4" />
+        <rect x="280" y="300" width="50" height="30" fill="#E8DCC4" opacity="0.4" />
+        <rect x="350" y="300" width="50" height="30" fill="#C49A45" />
+        <rect x="420" y="300" width="50" height="30" fill="#E8DCC4" opacity="0.4" />
       </Frame>
     );
   }
 
   return (
     <Frame className={className} label="Stadium seating">
-      <polygon points="80,320 320,80 560,320" fill="#0C4A86" />
-      <rect x="250" y="250" width="140" height="70" fill="#1473C4" />
-      <circle cx="320" cy="200" r="16" fill="#D4F34A" />
-      <rect x="120" y="300" width="40" height="20" fill="#D4F34A" />
-      <rect x="170" y="280" width="40" height="20" fill="#F7FBFF" opacity="0.45" />
-      <rect x="430" y="280" width="40" height="20" fill="#F7FBFF" opacity="0.45" />
-      <rect x="480" y="300" width="40" height="20" fill="#D4F34A" />
+      <polygon points="80,320 320,80 560,320" fill="#2A6B5C" />
+      <rect x="250" y="250" width="140" height="70" fill="#123F36" />
+      <circle cx="320" cy="200" r="16" fill="#C49A45" />
+      <rect x="120" y="300" width="40" height="20" fill="#C49A45" />
+      <rect x="170" y="280" width="40" height="20" fill="#E8DCC4" opacity="0.45" />
+      <rect x="430" y="280" width="40" height="20" fill="#E8DCC4" opacity="0.45" />
+      <rect x="480" y="300" width="40" height="20" fill="#C49A45" />
     </Frame>
   );
 }

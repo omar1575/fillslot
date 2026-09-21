@@ -69,6 +69,12 @@ export const DEV_ACCOUNTS = [
     id: "user_player_fillslot",
   },
   {
+    email: "lars@fillslot.test",
+    name: "Lars de Groot",
+    role: "consumer" as const,
+    id: "user_player_lars",
+  },
+  {
     email: "club@plazapadel.test",
     name: "Plaza Padel Maastricht",
     role: "club" as const,

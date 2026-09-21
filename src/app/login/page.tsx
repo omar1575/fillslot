@@ -38,7 +38,7 @@ export default async function LoginPage({
       </p>
 
       {typeof query.error === "string" ? (
-        <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">
+        <p className="notice-error mt-4">
           Sign-in failed. Try a demo account or another email.
         </p>
       ) : null}
@@ -88,7 +88,7 @@ export default async function LoginPage({
                     >
                       <button
                         type="submit"
-                        className="flex h-12 w-full items-center justify-between bg-[var(--glass)] px-3 text-left text-sm hover:bg-[#b7cce0]"
+                        className="flex h-12 w-full items-center justify-between bg-[var(--glass)] px-3 text-left text-sm hover:bg-[var(--ball)]"
                       >
                         <span>Continue as {account.name}</span>
                         <span className="hidden font-mono text-[10px] text-[var(--ink)]/50 sm:inline">

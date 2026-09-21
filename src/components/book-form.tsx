@@ -46,7 +46,7 @@ export function BookForm({
       <button
         type="button"
         disabled
-        className="h-12 w-full bg-white/20 font-display text-lg text-white/70"
+        className="h-12 w-full bg-[var(--cream)]/15 font-display text-lg text-[var(--cream)]/70"
       >
         {label}
       </button>
@@ -58,13 +58,13 @@ export function BookForm({
       <input type="hidden" name="slotId" value={slotId} />
       {ticketed ? (
         <div>
-          <label htmlFor="quantity" className="font-mono text-[11px] tracking-[0.16em] uppercase text-white/60">
+          <label htmlFor="quantity" className="font-mono text-[11px] tracking-[0.16em] uppercase text-[var(--cream)]/60">
             {resourceLabel(category, 2)}
           </label>
           <div className="mt-2 flex items-center gap-3">
             <button
               type="button"
-              className="size-10 bg-white/10 text-xl"
+              className="size-10 bg-[var(--cream)]/10 text-xl"
               onClick={() => setQuantity((value) => Math.max(1, value - 1))}
               aria-label="Fewer tickets"
             >
@@ -78,17 +78,17 @@ export function BookForm({
               max={remaining}
               value={qty}
               onChange={(event) => setQuantity(Number(event.target.value))}
-              className="h-10 w-20 bg-white text-center text-[var(--ink)]"
+              className="h-10 w-20 bg-[var(--ticket)] text-center text-[var(--ink)]"
             />
             <button
               type="button"
-              className="size-10 bg-white/10 text-xl"
+              className="size-10 bg-[var(--cream)]/10 text-xl"
               onClick={() => setQuantity((value) => Math.min(remaining, value + 1))}
               aria-label="More tickets"
             >
               +
             </button>
-            <p className="text-sm text-white/65">
+            <p className="text-sm text-[var(--cream)]/65">
               {remaining} {resourceLabel(category, remaining)} left
             </p>
           </div>

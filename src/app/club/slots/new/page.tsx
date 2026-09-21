@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { createSlotAction } from "@/app/actions/slots";
@@ -48,7 +49,14 @@ export default async function NewSlotPage({
           ? `Dump leftover ${units} that are not filling. Guests pay the deal price in advance.`
           : `Dump a ${unit} window that is not filling. Guests pay the deal price in advance.`}
       </p>
-      {error ? <p className="mt-4 bg-[#c7342b] px-3 py-2 text-sm text-white">{error}</p> : null}
+      <p className="mt-3 text-sm text-[var(--ink)]/65">
+        Listing a group with min/full capacity, even numbers, or a flexible split?{" "}
+        <Link href="/partner/activity" className="underline">
+          Add a group activity
+        </Link>
+        .
+      </p>
+      {error ? <p className="notice-error mt-4">{error}</p> : null}
       <form action={createSlotAction} className="mt-8 space-y-5">
         <div className="space-y-2">
           <Label htmlFor="courtId" className="capitalize">
@@ -58,7 +66,7 @@ export default async function NewSlotPage({
             id="courtId"
             name="courtId"
             required
-            className="h-10 w-full border border-input bg-white px-3 text-sm"
+            className="h-10 w-full border border-input bg-[var(--ticket)] px-3 text-sm"
           >
             {venueCourts.map((court) => (
               <option key={court.id} value={court.id}>
